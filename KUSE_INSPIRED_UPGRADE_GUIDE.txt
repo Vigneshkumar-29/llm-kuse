@@ -1,0 +1,644 @@
+# ================================================================================
+#                  KUSE.AI-INSPIRED PROJECT UPGRADE GUIDE
+#                     Final Year Project Enhancement Plan
+# ================================================================================
+# Version: 1.0
+# Date: December 27, 2024
+# Based on: https://app.kuse.ai and https://kuse.ai
+# ================================================================================
+
+## 🎯 OVERVIEW: WHAT IS KUSE.AI?
+
+Kuse.ai is an "AI Knowledge Base" that transforms information into intelligence.
+It's described as "The AI workspace that transforms all information into 
+intelligence around your context."
+
+### CORE VALUE PROPOSITION:
+- All-in-one AI canvas for chatting with files, links & videos
+- Convert content into insights and actionable outputs
+- Create documents, webpages, and presentations from your data
+
+================================================================================
+
+## 📊 COMPARISON: YOUR CURRENT PROJECT vs KUSE.AI
+
+### WHAT YOUR PROJECT CURRENTLY HAS:
+✅ React + Vite frontend (modern stack)
+✅ Tailwind CSS styling with custom design system
+✅ Chat interface with AI (via Ollama backend)
+✅ Markdown rendering with syntax highlighting
+✅ Code block component with copy functionality
+✅ Sidebar navigation with connection status
+✅ Workspace split-pane view
+✅ Local storage persistence for messages
+✅ Model auto-detection from Ollama
+✅ Proxy configuration for Ngrok tunneling
+✅ Bento grid welcome screen with quick actions
+✅ Responsive design
+
+### WHAT KUSE.AI HAS (THAT YOU CAN ADD):
+❌ File upload capability (PDFs, Word, Excel, Images)
+❌ Video integration (YouTube embedding with Q&A)
+❌ Link/URL processing and analysis
+❌ Document generation (reports, CVs, invoices)
+❌ Presentation creation
+❌ Website generation
+❌ Canvas/Board interface
+❌ Knowledge base/Library system
+❌ Multiple AI model switching (GPT-4, Gemini, etc.)
+❌ Template system
+❌ Export to multiple formats
+❌ Source-only mode (answers only from uploaded files)
+
+================================================================================
+
+## 🛠️ STEP-BY-STEP UPGRADE PLAN
+
+================================================================================
+## PHASE 1: FILE UPLOAD & PROCESSING (PRIORITY: HIGH)
+================================================================================
+
+### Step 1.1: Add File Upload UI Component
+
+Create a new component: `src/components/FileUpload.jsx`
+
+FUNCTIONALITY TO IMPLEMENT:
+- Drag and drop zone
+- Click to upload button
+- File type validation (PDF, DOCX, TXT, CSV, XLSX, PNG, JPEG)
+- File size limit indicator
+- Upload progress bar
+- Preview uploaded files
+
+### Step 1.2: Create File Processing Service
+
+Create: `src/services/FileProcessor.js`
+
+FUNCTIONALITY TO IMPLEMENT:
+- PDF text extraction (use pdf.js library)
+- Image OCR capability (use Tesseract.js)
+- Excel/CSV parsing (use SheetJS/xlsx library)
+- Store extracted content in context
+
+REQUIRED PACKAGES:
+```bash
+npm install pdfjs-dist tesseract.js xlsx
+```
+
+### Step 1.3: Implement Context-Aware Chat
+
+MODIFY `src/App.jsx`:
+- Add file context to message prompt
+- Implement "Source Only Mode" toggle
+- Show which files are being referenced in responses
+
+================================================================================
+## PHASE 2: KNOWLEDGE BASE / LIBRARY SYSTEM (PRIORITY: HIGH)
+================================================================================
+
+### Step 2.1: Create Library Database Structure
+
+Create: `src/services/Library.js`
+
+DATA STRUCTURE:
+```javascript
+{
+  id: "unique-id",
+  name: "Document Name",
+  type: "pdf" | "url" | "video" | "text",
+  content: "Extracted text content...",
+  metadata: {
+    uploadDate: "2024-12-27",
+    fileSize: "2.5 MB",
+    pageCount: 15,
+    source: "uploaded" | "imported"
+  },
+  tags: ["research", "ai", "project"],
+  summary: "AI-generated summary..."
+}
+```
+
+### Step 2.2: Implement Library UI
+
+Create: `src/components/Library.jsx`
+
+FEATURES:
+- Grid view of all uploaded documents
+- Search functionality
+- Filter by type/tags
+- Quick preview
+- Delete/rename options
+- Drag to canvas functionality
+
+### Step 2.3: Integrate IndexedDB for Storage
+
+Use IndexedDB for larger file storage (localStorage has 5MB limit)
+
+REQUIRED PACKAGE:
+```bash
+npm install idb
+```
+
+================================================================================
+## PHASE 3: CANVAS / BOARD INTERFACE (PRIORITY: MEDIUM-HIGH)
+================================================================================
+
+### Step 3.1: Create Canvas Component
+
+Create: `src/components/Canvas.jsx`
+
+FEATURES (Kuse-style):
+- Infinite canvas with pan/zoom
+- Drag and drop elements
+- Connect elements with lines/arrows
+- Text boxes
+- Image embedding
+- Code snippet cards
+- AI response cards
+
+REQUIRED PACKAGES:
+```bash
+npm install @xyflow/react  # For node-based canvas
+# OR
+npm install react-draggable react-zoom-pan-pinch  # For custom implementation
+```
+
+### Step 3.2: Element Types to Support
+
+CANVAS ELEMENTS:
+1. Text Note - Editable text block
+2. AI Response Card - Chat response displayed as card
+3. Image Element - Uploaded or generated images
+4. Code Snippet - Syntax highlighted code block
+5. Document Reference - Link to library item
+6. Connection Lines - Link elements together
+
+### Step 3.3: Canvas State Management
+
+Create: `src/hooks/useCanvas.js`
+
+FUNCTIONALITY:
+- Save/load canvas state
+- Export canvas as image
+- Share canvas via link
+- Undo/redo functionality
+
+================================================================================
+## PHASE 4: DOCUMENT GENERATION (PRIORITY: MEDIUM)
+================================================================================
+
+### Step 4.1: Template System
+
+Create: `src/templates/`
+
+TEMPLATE TYPES:
+- Report Template
+- CV/Resume Template
+- Invoice Template
+- Presentation Template
+- Meeting Notes Template
+
+### Step 4.2: Document Export
+
+Create: `src/services/DocumentExport.js`
+
+EXPORT FORMATS:
+- PDF (use jsPDF or html2pdf)
+- DOCX (use docx library)
+- HTML
+- Markdown
+- Plain Text
+
+REQUIRED PACKAGES:
+```bash
+npm install jspdf html2pdf.js docx
+```
+
+### Step 4.3: Generation Prompts
+
+Create: `src/prompts/documentPrompts.js`
+
+PRE-BUILT PROMPTS FOR:
+- Generate report from data
+- Create CV from information
+- Summarize document
+- Create presentation outline
+- Extract key points
+
+================================================================================
+## PHASE 5: VIDEO & URL INTEGRATION (PRIORITY: MEDIUM)
+================================================================================
+
+### Step 5.1: YouTube Integration
+
+Create: `src/components/YouTubeEmbed.jsx`
+
+FUNCTIONALITY:
+- Paste YouTube URL
+- Embed video player
+- Extract subtitles/transcript
+- Ask questions about video content
+
+### Step 5.2: URL Content Extraction
+
+Create: `src/services/URLProcessor.js`
+
+FUNCTIONALITY:
+- Fetch webpage content
+- Extract main text (remove ads, navigation)
+- Generate summary
+- Add to knowledge base
+
+### Step 5.3: Web Scraping API
+
+For client-side limitations, consider:
+- Using a proxy service
+- Backend endpoint for URL processing
+- Chrome extension for content extraction
+
+================================================================================
+## PHASE 6: ENHANCED UI/UX (PRIORITY: HIGH)
+================================================================================
+
+### Step 6.1: Update Sidebar
+
+MODIFY `src/components/Sidebar.jsx`:
+
+ADD FEATURES:
+- Projects/Boards list
+- Quick access to recent items
+- Search across all content
+- User settings
+- Model selection dropdown
+- Usage statistics
+
+### Step 6.2: Update Workspace Panel
+
+MODIFY `src/components/WorkspacePanel.jsx`:
+
+ADD FEATURES:
+- Live code preview (for HTML/JS)
+- Document preview
+- Image viewer
+- Split view options
+- Tab system for multiple artifacts
+
+### Step 6.3: Command Palette
+
+Create: `src/components/CommandPalette.jsx`
+
+FEATURES (like VS Code):
+- Keyboard shortcut (Cmd/Ctrl + K)
+- Quick actions
+- Search files/content
+- AI quick prompts
+
+================================================================================
+## PHASE 7: BACKEND ENHANCEMENTS (OPTIONAL - FOR PRODUCTION)
+================================================================================
+
+### Step 7.1: Multiple AI Model Support
+
+MODIFY `vite.config.js` and `App.jsx`:
+
+SUPPORT FOR:
+- Ollama (current)
+- OpenAI API
+- Google Gemini API
+- Anthropic Claude API
+
+### Step 7.2: Create Proper Backend (Node.js)
+
+For production, consider creating:
+
+`backend/server.js`:
+- Express.js server
+- File processing endpoints
+- Caching layer
+- User authentication
+- Database integration (MongoDB/PostgreSQL)
+
+### Step 7.3: Real-time Features
+
+FUTURE ADDITIONS:
+- WebSocket for live streaming responses
+- Collaborative editing
+- Real-time sync across devices
+
+================================================================================
+## 📦 COMPLETE PACKAGE.JSON ADDITIONS
+================================================================================
+
+Add these packages for the full Kuse-like experience:
+
+```json
+{
+  "dependencies": {
+    // Existing packages...
+    
+    // File Processing
+    "pdfjs-dist": "^4.0.0",
+    "tesseract.js": "^5.0.0",
+    "xlsx": "^0.18.5",
+    
+    // Storage
+    "idb": "^8.0.0",
+    
+    // Canvas
+    "@xyflow/react": "^12.0.0",
+    
+    // Document Export
+    "jspdf": "^2.5.1",
+    "html2pdf.js": "^0.10.1",
+    "docx": "^8.5.0",
+    
+    // UI Enhancements
+    "framer-motion": "^11.0.0",
+    "cmdk": "^1.0.0",
+    
+    // Utilities
+    "date-fns": "^3.0.0",
+    "uuid": "^9.0.0"
+  }
+}
+```
+
+================================================================================
+## 📁 RECOMMENDED PROJECT STRUCTURE
+================================================================================
+
+```
+src/
+├── components/
+│   ├── Canvas/
+│   │   ├── Canvas.jsx
+│   │   ├── CanvasNode.jsx
+│   │   └── CanvasToolbar.jsx
+│   ├── Chat/
+│   │   ├── ChatMessage.jsx
+│   │   ├── ChatInput.jsx
+│   │   └── ChatHistory.jsx
+│   ├── Library/
+│   │   ├── Library.jsx
+│   │   ├── LibraryItem.jsx
+│   │   └── LibraryUpload.jsx
+│   ├── Workspace/
+│   │   ├── WorkspacePanel.jsx
+│   │   ├── CodePreview.jsx
+│   │   └── DocumentPreview.jsx
+│   ├── Common/
+│   │   ├── Sidebar.jsx
+│   │   ├── Header.jsx
+│   │   ├── CommandPalette.jsx
+│   │   └── Modal.jsx
+│   ├── CodeBlock.jsx
+│   └── FileUpload.jsx
+├── services/
+│   ├── FileProcessor.js
+│   ├── Library.js
+│   ├── DocumentExport.js
+│   ├── URLProcessor.js
+│   └── AIService.js
+├── hooks/
+│   ├── useLocalStorage.js
+│   ├── useCanvas.js
+│   ├── useLibrary.js
+│   └── useAI.js
+├── prompts/
+│   └── documentPrompts.js
+├── templates/
+│   ├── ReportTemplate.js
+│   ├── CVTemplate.js
+│   └── InvoiceTemplate.js
+├── utils/
+│   ├── fileUtils.js
+│   └── formatters.js
+├── App.jsx
+├── App.css
+├── index.css
+└── main.jsx
+```
+
+================================================================================
+## 🎯 IMPLEMENTATION PRIORITY ORDER
+================================================================================
+
+### WEEK 1-2: Core Functionality
+1. ✅ File Upload Component
+2. ✅ PDF/Text File Processing
+3. ✅ Context Integration with Chat
+4. ✅ Library Basic UI
+
+### WEEK 3-4: Enhanced Features
+5. ✅ Library Full Implementation
+6. ✅ Document Export (PDF/DOCX)
+7. ✅ Template System
+8. ✅ Command Palette
+
+### WEEK 5-6: Advanced Features
+9. ✅ Canvas/Board Interface (Basic)
+10. ✅ YouTube Integration
+11. ✅ URL Processing
+12. ✅ Multiple AI Models
+
+### WEEK 7-8: Polish & Production
+13. ✅ UI/UX Refinements
+14. ✅ Performance Optimization
+15. ✅ Testing & Bug Fixes
+16. ✅ Documentation
+
+================================================================================
+## 🔑 KEY DIFFERENTIATORS TO FOCUS ON
+================================================================================
+
+For your final year project, these features will make it stand out:
+
+1. **FILE INTELLIGENCE**: Upload any document and chat with it
+   - "What are the main points in this PDF?"
+   - "Summarize this research paper"
+   - "Extract data from this Excel file"
+
+2. **VISUAL WORKSPACE**: Canvas-based interface
+   - Drag AI responses onto canvas
+   - Connect related concepts
+   - Visual brainstorming
+
+3. **DOCUMENT GENERATION**: Create outputs
+   - Generate reports from chat
+   - Export as professional documents
+   - Template-based generation
+
+4. **KNOWLEDGE PERSISTENCE**: Build a personal knowledge base
+   - All uploads stored and searchable
+   - Context carries across sessions
+   - References tracked automatically
+
+================================================================================
+## 📝 SAMPLE IMPLEMENTATION: FILE UPLOAD COMPONENT
+================================================================================
+
+Here's a starter implementation for the file upload:
+
+```jsx
+// src/components/FileUpload.jsx
+import React, { useState, useRef } from 'react';
+import { Upload, File, X, CheckCircle } from 'lucide-react';
+
+const ACCEPTED_TYPES = {
+  'application/pdf': 'PDF',
+  'text/plain': 'TXT',
+  'image/png': 'PNG',
+  'image/jpeg': 'JPEG',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX'
+};
+
+const FileUpload = ({ onFilesProcessed }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [processing, setProcessing] = useState(false);
+  const inputRef = useRef(null);
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    processFiles(droppedFiles);
+  };
+
+  const processFiles = async (fileList) => {
+    setProcessing(true);
+    const processed = [];
+    
+    for (const file of fileList) {
+      if (ACCEPTED_TYPES[file.type]) {
+        // Extract content based on file type
+        const content = await extractContent(file);
+        processed.push({
+          id: crypto.randomUUID(),
+          name: file.name,
+          type: ACCEPTED_TYPES[file.type],
+          size: file.size,
+          content,
+          uploadDate: new Date().toISOString()
+        });
+      }
+    }
+    
+    setFiles(prev => [...prev, ...processed]);
+    setProcessing(false);
+    onFilesProcessed?.(processed);
+  };
+
+  const extractContent = async (file) => {
+    // For text files
+    if (file.type === 'text/plain') {
+      return await file.text();
+    }
+    
+    // For PDFs - would use pdfjs-dist
+    // For images - would use tesseract.js
+    // Placeholder for now
+    return `[Content of ${file.name}]`;
+  };
+
+  return (
+    <div
+      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={handleDrop}
+      onClick={() => inputRef.current?.click()}
+      className={`
+        border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer
+        transition-all duration-300
+        ${isDragging 
+          ? 'border-accent bg-accent/5 scale-[1.02]' 
+          : 'border-black/10 hover:border-black/20'}
+      `}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept={Object.keys(ACCEPTED_TYPES).join(',')}
+        onChange={(e) => processFiles(Array.from(e.target.files))}
+        className="hidden"
+      />
+      
+      <Upload size={32} className="mx-auto mb-4 text-secondary" />
+      <p className="font-medium text-primary">Drop files here or click to upload</p>
+      <p className="text-sm text-secondary mt-1">
+        Supports PDF, DOCX, TXT, PNG, JPEG
+      </p>
+      
+      {files.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {files.map(file => (
+            <div key={file.id} className="flex items-center gap-2 text-sm p-2 bg-white rounded-lg">
+              <File size={16} className="text-accent" />
+              <span className="flex-1 text-left truncate">{file.name}</span>
+              <CheckCircle size={16} className="text-green-500" />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default FileUpload;
+```
+
+================================================================================
+## 🚀 QUICK START COMMANDS
+================================================================================
+
+To begin implementing these features:
+
+```bash
+# Navigate to project
+cd d:\copy\1\llm
+
+# Install new dependencies
+npm install pdfjs-dist idb framer-motion uuid
+
+# Create new directories
+mkdir -p src/services src/hooks src/templates src/prompts src/utils
+
+# Start development
+npm run dev
+```
+
+================================================================================
+## 📚 RESOURCES & REFERENCES
+================================================================================
+
+1. **Kuse.ai Official**: https://kuse.ai
+2. **PDF.js Documentation**: https://mozilla.github.io/pdf.js/
+3. **React Flow (Canvas)**: https://reactflow.dev/
+4. **Framer Motion**: https://www.framer.com/motion/
+5. **IndexedDB (idb)**: https://github.com/jakearchibald/idb
+6. **jsPDF**: https://github.com/parallax/jsPDF
+
+================================================================================
+## ✅ SUCCESS CRITERIA FOR FINAL YEAR PROJECT
+================================================================================
+
+Your project will be successful if it can:
+
+1. Accept file uploads (PDF, images, text)
+2. Process and extract content from files
+3. Allow users to ask questions about uploaded content
+4. Provide AI responses with source references
+5. Export conversations/results as documents
+6. Maintain a searchable library of all content
+7. Present a professional, modern UI
+8. Work offline with cached content
+9. Handle errors gracefully
+10. Scale to handle multiple documents
+
+================================================================================
+
+Good luck with your final year project! 🎓
+
+================================================================================
