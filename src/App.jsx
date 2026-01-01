@@ -13,6 +13,7 @@ import { buildFileContext, extractSourceReferences } from './services/FileProces
 import { Canvas } from './components/Canvas';
 import { DocumentEditor } from './components/Documents';
 import { YouTubeEmbed } from './components/YouTube';
+import { URLExtractor } from './components/URLExtractor';
 
 // --- CONFIGURATION ---
 const DEFAULT_MODEL = "llama3.2";
@@ -531,6 +532,12 @@ function App() {
         {activeMode === 'youtube' && (
           <div className="w-full h-full">
             <YouTubeEmbed />
+          </div>
+        )}
+
+        {activeMode === 'url' && (
+          <div className="w-full h-full">
+            <URLExtractor />
           </div>
         )}
 

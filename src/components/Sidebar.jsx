@@ -1,5 +1,5 @@
 import React from 'react';
-import { PlusCircle, MessageSquare, Library, Upload, LayoutGrid, FileText, Youtube } from 'lucide-react';
+import { PlusCircle, MessageSquare, Library, Upload, LayoutGrid, FileText, Youtube, Link2 } from 'lucide-react';
 
 const Sidebar = ({ showSidebar, connectionStatus, modelName, onNewThread, onUploadClick, showUploadBadge, activeMode, onModeChange }) => {
     return (
@@ -65,6 +65,17 @@ const Sidebar = ({ showSidebar, connectionStatus, modelName, onNewThread, onUplo
                 >
                     <Youtube size={18} />
                     YouTube
+                </button>
+
+                <button
+                    onClick={() => onModeChange('url')}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeMode === 'url'
+                        ? 'bg-primary text-white shadow-md'
+                        : 'text-secondary hover:text-primary hover:bg-black/5'
+                        }`}
+                >
+                    <Link2 size={18} />
+                    URL Extract
                 </button>
 
                 <div className="my-4 border-t border-black/5" />
