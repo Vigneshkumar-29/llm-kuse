@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Menu, User, Sparkles, Zap, ArrowRight,
   LayoutGrid, FileText, Search, Paperclip
@@ -14,6 +14,7 @@ import { Canvas } from './components/Canvas';
 import { DocumentEditor } from './components/Documents';
 import { YouTubeEmbed } from './components/YouTube';
 import { URLExtractor } from './components/URLExtractor';
+import CommandPalette from './components/CommandPalette';
 
 // --- CONFIGURATION ---
 const DEFAULT_MODEL = "llama3.2";
@@ -93,6 +94,9 @@ function App() {
 
   // Mode State
   const [activeMode, setActiveMode] = useState('chat');
+
+  // Command Palette State
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
 
   // Refs
   const messagesEndRef = useRef(null);
@@ -271,8 +275,62 @@ function App() {
     }
   };
 
+  // Handle Command Palette actions
+  const handleCommand = useCallback((action) => {
+    switch (action.type) {
+      case 'ai-prompt':
+        setInput(action.prompt);
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+        break;
+      case 'command':
+        const cmd = action.command;
+        if (cmd.id === 'action-clear') {
+          handleNewThread();
+        } else if (cmd.id === 'action-workspace') {
+          setShowWorkspace(!showWorkspace);
+        } else if (cmd.id === 'settings-theme') {
+          // Theme toggle would go here
+          console.log('Toggle theme');
+        }
+        break;
+      default:
+        break;
+    }
+  }, [showWorkspace]);
+
+  // Global keyboard shortcut for Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Cmd/Ctrl + K to open command palette
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background text-primary selection:bg-accent/20 font-sans">
+
+      {/* COMMAND PALETTE */}
+      <CommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        onCommand={handleCommand}
+        onModeChange={setActiveMode}
+        onNewThread={handleNewThread}
+        onUploadClick={() => {
+          setShowCommandPalette(false);
+          setShowUploadModal(true);
+        }}
+        files={uploadedFiles}
+        recentItems={[]}
+      />
 
       {/* FILE UPLOAD MODAL */}
       <FileUploadModal
@@ -292,6 +350,10 @@ function App() {
         showUploadBadge={uploadedFiles.length === 0}
         activeMode={activeMode}
         onModeChange={setActiveMode}
+        onModelChange={(newModel) => {
+          setModel(newModel);
+          console.log(`Model changed to: ${newModel}`);
+        }}
       />
 
       {/* MAIN CONTENT AREA */}
@@ -315,6 +377,18 @@ function App() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {/* Command Palette Button */}
+                  <button
+                    onClick={() => setShowCommandPalette(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm transition-colors"
+                    title="Command Palette (Ctrl+K)"
+                  >
+                    <Search size={14} />
+                    <span className="hidden md:inline">Search...</span>
+                    <kbd className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white text-[10px] text-slate-500 font-mono border border-slate-200">
+                      ⌘K
+                    </kbd>
+                  </button>
                   <button
                     onClick={() => setShowWorkspace(!showWorkspace)}
                     className={`p-2 rounded-lg transition-colors ${showWorkspace ? 'bg-accent/10 text-accent' : 'hover:bg-black/5 text-secondary'}`}
