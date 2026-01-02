@@ -4,6 +4,7 @@ import {
   LayoutGrid, FileText, Search, Paperclip
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import CodeBlock from './components/CodeBlock';
 import Sidebar from './components/Sidebar';
 import WorkspacePanel from './components/WorkspacePanel';
@@ -210,6 +211,16 @@ function App() {
     setConnectionStatus("Processing...");
 
     // Create system-enhanced message for API (includes file context)
+    const systemPrompt = {
+      role: 'system',
+      content: `You are DevSavvy, an intelligent coding assistant. 
+      - Always format your responses using clean, readable Markdown.
+      - Use code blocks with language identifiers for code (e.g., \`\`\`javascript).
+      - Use bolding for key terms and headers for sections.
+      - If explaining code, break it down step-by-step.
+      - Be concise but helpful.`
+    };
+
     const messageForAPI = {
       role: 'user',
       content: fileContext
@@ -217,7 +228,7 @@ function App() {
         : messageText
     };
 
-    const messagesForAPI = [...messages, messageForAPI];
+    const messagesForAPI = [systemPrompt, ...messages, messageForAPI];
 
     try {
       const response = await fetch('/ollama/api/chat', {
@@ -599,7 +610,9 @@ function App() {
                           {msg.role === 'assistant' ? (
                             <div className="prose-clean bg-white p-6 rounded-2xl shadow-card border border-black/5 max-w-full overflow-hidden">
                               <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
                                 components={{
+                                  a: ({ node, ...props }) => <a target="_blank" rel="noopener noreferrer" {...props} />,
                                   code({ node, inline, className, children, ...props }) {
                                     const match = /language-(\w+)/.exec(className || '')
                                     return !inline && match ? (

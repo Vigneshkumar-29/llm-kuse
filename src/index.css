@@ -172,6 +172,49 @@
   color: #6B7280;
 }
 
+.prose-clean ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin: 0.5em 0;
+}
+
+.prose-clean li {
+  margin-bottom: 0.3em;
+}
+
+.prose-clean table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.9em;
+}
+
+.prose-clean th {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 2px solid #E5E7EB;
+  font-weight: 600;
+  color: #111827;
+  background-color: #F9FAFB;
+}
+
+.prose-clean td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #E5E7EB;
+  color: #4B5563;
+}
+
+.prose-clean a {
+  color: #6366F1;
+  text-decoration: none;
+  border-bottom: 1px dashed currentColor;
+}
+
+.prose-clean a:hover {
+  color: #4F46E5;
+  border-bottom-style: solid;
+}
+
 /* =============================================================================
    LIBRARY COMPONENT ANIMATIONS
    ============================================================================= */
