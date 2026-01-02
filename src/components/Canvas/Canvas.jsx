@@ -34,6 +34,7 @@ import '@xyflow/react/dist/style.css';
 
 import { nodeTypes, edgeTypes } from './CanvasNodes';
 import CanvasToolbar from './CanvasToolbar';
+import CanvasAIActions from './CanvasAIActions';
 import { X, Maximize2, Minimize2, Layers, Sparkles } from 'lucide-react';
 
 // =============================================================================
@@ -86,6 +87,8 @@ const CanvasInner = ({ isOpen = true, onClose, onMinimize, isMinimized = false }
     const [isLocked, setIsLocked] = useState(false);
     const [history, setHistory] = useState([]);
     const [historyIndex, setHistoryIndex] = useState(-1);
+    const [selectedNode, setSelectedNode] = useState(null);
+    const [selectedNodePosition, setSelectedNodePosition] = useState({ x: 0, y: 0 });
 
     // ==========================================================================
     // PERSISTENCE
@@ -202,6 +205,51 @@ const CanvasInner = ({ isOpen = true, onClose, onMinimize, isMinimized = false }
         setEdges(eds => addEdge({ ...params, ...defaultEdgeOptions }, eds));
         saveHistory();
     }, [isLocked, setEdges, saveHistory]);
+
+    // ==========================================================================
+    // SELECTION HANDLING (for AI Actions)
+    // ==========================================================================
+
+    const onSelectionChange = useCallback(({ nodes: selectedNodes }) => {
+        if (selectedNodes && selectedNodes.length === 1) {
+            const node = selectedNodes[0];
+            setSelectedNode(node);
+            // Calculate position for AI actions bar
+            const position = reactFlowInstance.flowToScreenPosition({
+                x: node.position.x + (node.width || 200) / 2,
+                y: node.position.y
+            });
+            setSelectedNodePosition(position);
+        } else {
+            setSelectedNode(null);
+        }
+    }, [reactFlowInstance]);
+
+    // Add node with custom data (for AI actions)
+    const addNodeWithData = useCallback((type, customData = {}) => {
+        if (isLocked) return;
+
+        const position = selectedNode
+            ? { x: selectedNode.position.x + 50, y: selectedNode.position.y + 150 }
+            : reactFlowInstance.screenToFlowPosition({
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2
+            });
+
+        const newNode = {
+            id: generateId(),
+            type,
+            position,
+            data: {
+                onDelete: deleteNode,
+                onUpdate: updateNodeData,
+                ...customData
+            }
+        };
+
+        setNodes(nds => [...nds, newNode]);
+        saveHistory();
+    }, [reactFlowInstance, isLocked, selectedNode, setNodes, saveHistory, deleteNode, updateNodeData]);
 
     // ==========================================================================
     // DRAG & DROP FROM LIBRARY
@@ -353,6 +401,7 @@ const CanvasInner = ({ isOpen = true, onClose, onMinimize, isMinimized = false }
                     onConnect={onConnect}
                     onDragOver={onDragOver}
                     onDrop={onDrop}
+                    onSelectionChange={onSelectionChange}
                     nodeTypes={nodeTypes}
                     edgeTypes={edgeTypes}
                     defaultEdgeOptions={defaultEdgeOptions}
@@ -406,6 +455,16 @@ const CanvasInner = ({ isOpen = true, onClose, onMinimize, isMinimized = false }
                 nodeCount={nodes.length}
                 edgeCount={edges.length}
             />
+
+            {/* AI Actions (appears when a node is selected) */}
+            {selectedNode && !isLocked && (
+                <CanvasAIActions
+                    selectedNode={selectedNode}
+                    onUpdateNode={updateNodeData}
+                    onAddNode={addNodeWithData}
+                    position={selectedNodePosition}
+                />
+            )}
         </div>
     );
 };

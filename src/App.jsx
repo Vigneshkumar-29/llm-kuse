@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Menu, User, Sparkles, Zap, ArrowRight,
-  LayoutGrid, FileText, Search, Paperclip
+  LayoutGrid, FileText, Search, Paperclip, Download
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -18,6 +18,8 @@ import { YouTubeEmbed } from './components/YouTube';
 import { URLExtractor } from './components/URLExtractor';
 import CommandPalette from './components/CommandPalette';
 import aiService from './services/AIService';
+import ExportService from './services/ExportService';
+import VoiceInputButton from './components/VoiceInputButton';
 
 // --- CONFIGURATION ---
 const DEFAULT_MODEL = "llama3.2";
@@ -525,6 +527,18 @@ function App() {
                       ⌘K
                     </kbd>
                   </button>
+
+                  {/* Export Button - Only show when there are messages */}
+                  {messages.length > 0 && (
+                    <button
+                      onClick={() => ExportService.downloadChatMarkdown(messages, 'DevSavvy Chat')}
+                      className="p-2 rounded-lg hover:bg-black/5 text-secondary transition-colors"
+                      title="Export conversation"
+                    >
+                      <Download size={18} />
+                    </button>
+                  )}
+
                   <button
                     onClick={() => setShowWorkspace(!showWorkspace)}
                     className={`p-2 rounded-lg transition-colors ${showWorkspace ? 'bg-accent/10 text-accent' : 'hover:bg-black/5 text-secondary'}`}
@@ -710,6 +724,12 @@ function App() {
                       disabled={isLoading}
                       className="flex-1 bg-transparent border-none outline-none text-primary placeholder-subtle text-base py-3"
                     />
+
+                    {/* Voice Input Button */}
+                    <VoiceInputButton
+                      onTranscript={(text) => setInput(prev => prev + (prev ? ' ' : '') + text)}
+                    />
+
                     <button
                       onClick={() => handleSend()}
                       disabled={isLoading || !input.trim()}

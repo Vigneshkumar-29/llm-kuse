@@ -10,13 +10,18 @@
 // Canvas Hooks - Step 3.3 Implementation
 export {
     default as useCanvas,
-    useCanvas,
     useCanvasVisibility,
     useCanvasTemplates
 } from './useCanvas';
 
 // Database Hook
-export { default as useDatabase, useDatabase } from './useDatabase';
+export { default as useDatabase } from './useDatabase';
 
 // Library Hook
-export { default as useLibrary, useLibrary } from './useLibrary';
+export { default as useLibrary } from './useLibrary';
+
+// AI Hook - Canvas AI Integration
+export { default as useAI } from './useAI';
+
+// Voice Input Hook - Speech-to-Text
+export { default as useVoiceInput } from './useVoiceInput';
