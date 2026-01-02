@@ -263,13 +263,6 @@ export const extractTextWithOCR = async (file) => {
 // DOCX EXTRACTION
 // =============================================================================
 
-
-// ... (other imports)
-
-// =============================================================================
-// DOCX EXTRACTION
-// =============================================================================
-
 /**
  * Extract text from DOCX file using Mammoth
  * @param {File} file - DOCX file to process

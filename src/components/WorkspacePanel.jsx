@@ -247,8 +247,8 @@ const WorkspacePanel = ({ showWorkspace, onClose, artifacts = [], activeArtifact
                         <button
                             onClick={() => setViewMode('code')}
                             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'code'
-                                    ? 'bg-white shadow-sm text-slate-800'
-                                    : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`
+                                ? 'bg-white shadow-sm text-slate-800'
+                                : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`
                                 }`}
                         >
                             <Code2 size={14} className="inline mr-1" />
@@ -257,8 +257,8 @@ const WorkspacePanel = ({ showWorkspace, onClose, artifacts = [], activeArtifact
                         <button
                             onClick={() => setViewMode('preview')}
                             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'preview'
-                                    ? 'bg-white shadow-sm text-slate-800'
-                                    : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`
+                                ? 'bg-white shadow-sm text-slate-800'
+                                : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`
                                 }`}
                         >
                             <Eye size={14} className="inline mr-1" />
@@ -267,8 +267,8 @@ const WorkspacePanel = ({ showWorkspace, onClose, artifacts = [], activeArtifact
                         <button
                             onClick={() => setViewMode('split')}
                             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'split'
-                                    ? 'bg-white shadow-sm text-slate-800'
-                                    : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`
+                                ? 'bg-white shadow-sm text-slate-800'
+                                : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`
                                 }`}
                         >
                             <SplitSquareHorizontal size={14} className="inline mr-1" />
@@ -429,7 +429,7 @@ const WorkspacePanel = ({ showWorkspace, onClose, artifacts = [], activeArtifact
                                                 ref={iframeRef}
                                                 title="Preview"
                                                 className="w-full h-full border-none bg-white"
-                                                sandbox="allow-scripts allow-same-origin"
+                                                sandbox="allow-scripts"
                                             />
                                         </div>
                                     )}

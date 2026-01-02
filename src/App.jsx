@@ -12,6 +12,7 @@ import ContextSettings, { SourceReferenceDisplay } from './components/ContextSet
 import { buildFileContext, extractSourceReferences } from './services/FileProcessor';
 import { Canvas } from './components/Canvas';
 import { DocumentEditor } from './components/Documents';
+import Library from './components/Library/Library';
 import { YouTubeEmbed } from './components/YouTube';
 import { URLExtractor } from './components/URLExtractor';
 import CommandPalette from './components/CommandPalette';
@@ -82,6 +83,7 @@ function App() {
   const [showWorkspace, setShowWorkspace] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
   const [model, setModel] = useState(DEFAULT_MODEL);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // File Upload State
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -112,7 +114,7 @@ function App() {
     }
   }, [messages, isLoading, activeMode]);
 
-  // Auto-detect available models
+  // Auto-detect available models or enable demo mode
   useEffect(() => {
     const fetchModels = async () => {
       try {
@@ -136,13 +138,18 @@ function App() {
             console.log(`Fallback to first model: ${availableModels[0]}`);
           }
           setConnectionStatus("Ready");
+          setIsDemoMode(false);
         } else {
-          console.warn("No models found in Ollama.");
-          setConnectionStatus("No Models Found");
+          console.warn("No models found in Ollama. Enabling demo mode.");
+          setConnectionStatus("Demo Mode");
+          setIsDemoMode(true);
+          setModel("demo");
         }
       } catch (e) {
-        console.warn("Model detection failed, using default.", e);
-        setConnectionStatus("Ready (Default Model)");
+        console.warn("Ollama not available. Enabling demo mode.", e.message);
+        setConnectionStatus("Demo Mode");
+        setIsDemoMode(true);
+        setModel("demo");
       }
     };
 
@@ -174,6 +181,34 @@ function App() {
     // Create user message (visible to user without file context)
     const userMsg = { role: 'user', content: messageText };
 
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setInput("");
+    setIsLoading(true);
+    setReferencedSources([]);
+
+    // Demo mode - simulate AI response
+    if (isDemoMode) {
+      setConnectionStatus("Demo Mode");
+      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700));
+
+      const demoResponse = generateDemoResponse(messageText, uploadedFiles);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: demoResponse,
+        referencedSources: []
+      }]);
+
+      if (demoResponse.includes("```")) {
+        setShowWorkspace(true);
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    // Real API call
+    setConnectionStatus("Processing...");
+
     // Create system-enhanced message for API (includes file context)
     const messageForAPI = {
       role: 'user',
@@ -182,14 +217,7 @@ function App() {
         : messageText
     };
 
-    const newMessages = [...messages, userMsg];
     const messagesForAPI = [...messages, messageForAPI];
-
-    setMessages(newMessages);
-    setInput("");
-    setIsLoading(true);
-    setConnectionStatus("Processing...");
-    setReferencedSources([]); // Reset references for new message
 
     try {
       const response = await fetch('/ollama/api/chat', {
@@ -239,19 +267,96 @@ function App() {
 
     } catch (error) {
       console.error("Connection Error:", error);
-      setConnectionStatus("Disconnected");
+      // Fall back to demo mode on error
+      setConnectionStatus("Demo Mode (Fallback)");
+      setIsDemoMode(true);
+
+      const demoResponse = generateDemoResponse(messageText, uploadedFiles);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `**Connection Error**\n\nUnable to reach the AI backend. Please ensure:\n\n` +
-          `• Google Colab notebook is running\n` +
-          `• Ngrok tunnel is active\n` +
-          `• The URL in \`.env\` is correct\n` +
-          `• A valid model is installed (tried using: \`${model}\`)\n\n` +
-          `*Technical details: ${error.message}*`
+        content: demoResponse,
+        referencedSources: []
       }]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Generate demo responses based on user input
+  const generateDemoResponse = (userMessage, files) => {
+    const msg = userMessage.toLowerCase();
+
+    // Check if there are uploaded files
+    if (files.length > 0) {
+      const fileNames = files.map(f => f.name).join(', ');
+      return `I can see you've uploaded: **${fileNames}**\n\n` +
+        `In demo mode, I can't fully analyze these files, but here's what I can help with:\n\n` +
+        `1. **File Organization** - I can suggest ways to categorize your documents\n` +
+        `2. **Summarization** - Once connected to an AI backend, I can summarize content\n` +
+        `3. **Q&A** - Ask questions about your files when connected to Ollama\n\n` +
+        `*To enable full AI capabilities, please start Ollama with a model like llama3.2*`;
+    }
+
+    // Code-related responses
+    if (msg.includes('code') || msg.includes('function') || msg.includes('javascript') || msg.includes('python')) {
+      return `Here's an example of what I can help you with:\n\n` +
+        `\`\`\`javascript\n// Example: A simple utility function\nfunction greet(name) {\n  return \`Hello, \${name}! Welcome to DevSavvy.\`;\n}\n\nconsole.log(greet('Developer'));\n\`\`\`\n\n` +
+        `In full mode with Ollama connected, I can:\n` +
+        `- Generate complete code solutions\n` +
+        `- Debug your existing code\n` +
+        `- Explain complex algorithms\n` +
+        `- Convert between programming languages`;
+    }
+
+    // Explain-related responses
+    if (msg.includes('explain') || msg.includes('what is') || msg.includes('how does')) {
+      return `Great question! In demo mode, I'll give you a brief overview.\n\n` +
+        `**DevSavvy** is an AI-powered knowledge workspace that helps you:\n\n` +
+        `1. 📄 **Process Documents** - Upload and analyze PDFs, images, and more\n` +
+        `2. 🎨 **Create on Canvas** - Visual brainstorming with AI assistance\n` +
+        `3. 🎬 **Extract from Videos** - Get insights from YouTube content\n` +
+        `4. 🔗 **Parse URLs** - Extract and summarize web content\n\n` +
+        `*Connect to Ollama for full AI-powered explanations!*`;
+    }
+
+    // Debug-related responses
+    if (msg.includes('debug') || msg.includes('error') || msg.includes('fix')) {
+      return `I'd love to help debug! Here's how I can assist:\n\n` +
+        `**Common Debugging Steps:**\n` +
+        `1. Check console for error messages\n` +
+        `2. Verify variable types and values\n` +
+        `3. Review recent code changes\n` +
+        `4. Test with simplified inputs\n\n` +
+        `Share your code when connected to Ollama, and I'll provide specific fixes!`;
+    }
+
+    // Help/introduction
+    if (msg.includes('help') || msg.includes('hello') || msg.includes('hi') || msg.includes('start')) {
+      return `👋 **Welcome to DevSavvy!**\n\n` +
+        `I'm running in **Demo Mode** right now. Here's what you can explore:\n\n` +
+        `| Feature | Status |\n|---------|--------|\n` +
+        `| 💬 Chat Interface | ✅ Working |\n` +
+        `| 📁 File Upload | ✅ Working |\n` +
+        `| 🎨 Canvas | ✅ Working |\n` +
+        `| 📝 Documents | ✅ Working |\n` +
+        `| 🤖 AI Responses | ⚠️ Demo Only |\n\n` +
+        `**To enable full AI:**\n` +
+        `1. Install [Ollama](https://ollama.ai)\n` +
+        `2. Run: \`ollama run llama3.2\`\n` +
+        `3. Refresh this page\n\n` +
+        `Try asking me about code, explanations, or debugging!`;
+    }
+
+    // Default response
+    return `Thanks for your message! I'm currently in **Demo Mode**.\n\n` +
+      `Your query: *"${userMessage}"*\n\n` +
+      `In demo mode, I provide sample responses to showcase the interface. ` +
+      `For full AI capabilities including:\n\n` +
+      `- 🧠 Intelligent code generation\n` +
+      `- 📖 Document analysis\n` +
+      `- 💡 Creative brainstorming\n` +
+      `- 🔍 Deep explanations\n\n` +
+      `Please connect Ollama by running \`ollama run llama3.2\` in your terminal.`;
   };
 
   const handleNewThread = () => {
@@ -299,6 +404,25 @@ function App() {
         break;
     }
   }, [showWorkspace]);
+
+  // Handle adding content from Library/Documents to Chat
+  const handleAddToChat = useCallback((content) => {
+    setActiveMode('chat');
+    // If content is an object (document), extract text or name
+    const textToAdd = typeof content === 'string' ? content : (content.content || `Ref: ${content.name}`);
+
+    setInput(prev => {
+      const separator = prev ? '\n\n' : '';
+      return `${prev}${separator}${textToAdd}`;
+    });
+
+    // Focus input after a short delay to allow mode switch
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
+  }, []);
 
   // Global keyboard shortcut for Command Palette
   useEffect(() => {
@@ -413,9 +537,20 @@ function App() {
                       <h1 className="font-serif text-4xl md:text-5xl text-primary mb-4 tracking-tight">
                         What will you <span className="text-accent italic">create</span> today?
                       </h1>
-                      <p className="text-secondary text-lg font-light max-w-xl mx-auto">
-                        Your persistent AI workspace ({model}).
+                      <p className="text-secondary text-lg font-light max-w-xl mx-auto mb-3">
+                        Your persistent AI workspace.
                       </p>
+                      {isDemoMode ? (
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-full text-amber-700 text-sm">
+                          <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                          <span>Demo Mode - AI responses are simulated</span>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full text-emerald-700 text-sm">
+                          <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                          <span>Connected to {model}</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl px-6">
@@ -612,6 +747,16 @@ function App() {
         {activeMode === 'url' && (
           <div className="w-full h-full">
             <URLExtractor />
+          </div>
+        )}
+
+        {activeMode === 'library' && (
+          <div className="w-full h-full">
+            <Library
+              isOpen={true}
+              onAddToChat={handleAddToChat}
+              onUploadClick={() => setShowUploadModal(true)}
+            />
           </div>
         )}
 
