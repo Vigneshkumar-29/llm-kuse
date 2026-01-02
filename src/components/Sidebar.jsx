@@ -3,7 +3,7 @@ import {
     PlusCircle, MessageSquare, Library, Upload, LayoutGrid, FileText, Youtube, Link2,
     Search, ChevronDown, ChevronRight, Settings, User, Star, Clock, Folder, FolderOpen,
     Hash, BarChart3, Zap, Cpu, HardDrive, Activity, X, Check, Edit2, Trash2, MoreHorizontal,
-    Sparkles, TrendingUp, Layers, Grid, BookOpen, AlertCircle, Moon, Sun, Bell, LogOut
+    Sparkles, TrendingUp, Layers, Grid, BookOpen, AlertCircle, Moon, Sun, Bell, LogOut, RefreshCw
 } from 'lucide-react';
 
 // Mock data for demonstration
@@ -40,7 +40,8 @@ const Sidebar = ({
     showUploadBadge,
     activeMode,
     onModeChange,
-    onModelChange
+    onModelChange,
+    onRetryConnection
 }) => {
     // State
     const [searchQuery, setSearchQuery] = useState('');
@@ -54,8 +55,11 @@ const Sidebar = ({
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [selectedModel, setSelectedModel] = useState(modelName || 'llama3.2');
     const [isDarkMode, setIsDarkMode] = useState(false);
+    // eslint-disable-next-line
     const [projects, setProjects] = useState(MOCK_PROJECTS);
+    // eslint-disable-next-line
     const [editingProject, setEditingProject] = useState(null);
+    // eslint-disable-next-line
     const [projectMenuOpen, setProjectMenuOpen] = useState(null);
 
     // Refs
@@ -137,9 +141,14 @@ const Sidebar = ({
                     </div>
                     <div>
                         <span className="font-serif font-semibold text-lg tracking-tight text-slate-800">DevSavvy</span>
-                        <div className="flex items-center gap-1.5">
-                            <div className={`w-1.5 h-1.5 rounded-full ${connectionStatus === 'Connected' || connectionStatus === 'Ready' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                            <span className="text-[10px] text-slate-400 font-medium">{connectionStatus}</span>
+                        <div
+                            className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 px-1.5 py-0.5 rounded transition-colors group"
+                            onClick={onRetryConnection}
+                            title="Click to retry connection to Ollama"
+                        >
+                            <div className={`w-1.5 h-1.5 rounded-full ${connectionStatus === 'Connected' || connectionStatus === 'Ready' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500 group-hover:bg-amber-600'}`} />
+                            <span className="text-[10px] text-slate-400 font-medium group-hover:text-slate-600">{connectionStatus}</span>
+                            <RefreshCw size={10} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                     </div>
                 </div>

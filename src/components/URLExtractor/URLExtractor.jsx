@@ -222,36 +222,58 @@ const URLExtractor = ({ onClose, onAddToLibrary }) => {
         }
     }, [url]);
 
-    // Handle AI summarization (mock - connect to your AI backend)
+    // Handle AI summarization
     const handleSummarize = useCallback(async () => {
         if (!extractedData) return;
 
         setIsProcessingAI(true);
         setAiResponseType('summary');
 
-        // Generate prompt
-        const prompt = URLProcessor.generateSummaryPrompt(extractedData);
+        try {
+            // Import AIService dynamically
+            const { default: aiService } = await import('../../services/AIService');
 
-        // Mock AI response - replace with actual API call
-        setTimeout(() => {
-            const mockSummary = `**Summary of "${extractedData.metadata?.title}"**
+            if (!aiService.isAvailable()) {
+                await aiService.checkConnection();
+            }
+
+            if (aiService.isAvailable()) {
+                const result = await aiService.summarize(
+                    extractedData.content?.text || '',
+                    {
+                        title: extractedData.metadata?.title,
+                        url: extractedData.url
+                    }
+                );
+
+                if (result.success) {
+                    setAiResponse(result.content);
+                } else {
+                    throw new Error(result.error);
+                }
+            } else {
+                // Demo fallback
+                const mockSummary = `**Summary of "${extractedData.metadata?.title}"** *(Demo Mode)*
 
 This webpage from ${URLProcessor.extractDomain(extractedData.url)} covers the following main topics:
 
 ${extractedData.structured?.headings?.slice(0, 3).map(h => `• ${h.text}`).join('\n') || '• Main content extracted successfully'}
 
-The content contains approximately ${extractedData.content?.wordCount} words and provides information about the subject matter.
+The content contains approximately ${extractedData.content?.wordCount} words.
 
-**Key Takeaways:**
-1. The page focuses on providing informative content
-2. Multiple sections are structured for easy reading
-3. The content is relevant to users interested in this topic
+**To enable real AI summarization:**
+1. Start Ollama locally
+2. Pull a model (e.g., \`ollama pull llama3.2\`)
+3. Click the status indicator in the sidebar to reconnect`;
 
-*Note: Connect an AI backend for accurate summarization.*`;
-
-            setAiResponse(mockSummary);
+                setAiResponse(mockSummary);
+            }
+        } catch (error) {
+            console.error('Summarize error:', error);
+            setAiResponse(`⚠️ Error: ${error.message}\n\nPlease ensure the AI backend is running.`);
+        } finally {
             setIsProcessingAI(false);
-        }, 1500);
+        }
     }, [extractedData]);
 
     // Handle key points extraction
@@ -261,22 +283,48 @@ The content contains approximately ${extractedData.content?.wordCount} words and
         setIsProcessingAI(true);
         setAiResponseType('keypoints');
 
-        // Mock response
-        setTimeout(() => {
-            const mockPoints = `**Key Points from "${extractedData.metadata?.title}"**
+        try {
+            const { default: aiService } = await import('../../services/AIService');
 
-${extractedData.structured?.headings?.slice(0, 5).map((h, i) => `${i + 1}. **${h.text}**\n   Content related to this section...`).join('\n\n') ||
-                `1. Main topic identified from the webpage
+            if (!aiService.isAvailable()) {
+                await aiService.checkConnection();
+            }
+
+            if (aiService.isAvailable()) {
+                const result = await aiService.extractKeyPoints(
+                    extractedData.content?.text || '',
+                    { title: extractedData.metadata?.title }
+                );
+
+                if (result.success) {
+                    setAiResponse(result.content);
+                } else {
+                    throw new Error(result.error);
+                }
+            } else {
+                // Demo fallback
+                const mockPoints = `**Key Points from "${extractedData.metadata?.title}"** *(Demo Mode)*
+
+${extractedData.structured?.headings?.slice(0, 5).map((h, i) => `${i + 1}. **${h.text}**`).join('\n') ||
+                    `1. Main topic identified from the webpage
 2. Supporting information extracted
 3. Additional details from the content
 4. Related concepts mentioned
 5. Conclusion or summary points`}
 
-*Note: Connect an AI backend for accurate key point extraction.*`;
+**To enable real AI key point extraction:**
+1. Start Ollama locally
+2. Pull a model (e.g., \`ollama pull llama3.2\`)
+3. Click the status indicator in the sidebar to reconnect`;
 
-            setAiResponse(mockPoints);
+                setAiResponse(mockPoints);
+            }
+        } catch (error) {
+            console.error('Key points error:', error);
+            setAiResponse(`⚠️ Error: ${error.message}\n\nPlease ensure the AI backend is running.`);
+        } finally {
             setIsProcessingAI(false);
-        }, 1500);
+        }
     }, [extractedData]);
 
     // Add to knowledge base

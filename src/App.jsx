@@ -17,6 +17,7 @@ import Library from './components/Library/Library';
 import { YouTubeEmbed } from './components/YouTube';
 import { URLExtractor } from './components/URLExtractor';
 import CommandPalette from './components/CommandPalette';
+import aiService from './services/AIService';
 
 // --- CONFIGURATION ---
 const DEFAULT_MODEL = "llama3.2";
@@ -116,46 +117,35 @@ function App() {
   }, [messages, isLoading, activeMode]);
 
   // Auto-detect available models or enable demo mode
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const res = await fetch('/ollama/api/tags');
-        if (!res.ok) throw new Error('Failed to fetch models');
+  const checkConnection = useCallback(async () => {
+    try {
+      setConnectionStatus("Connecting...");
 
-        const data = await res.json();
-        const availableModels = data.models?.map(m => m.name) || [];
+      // Use centralized AI service
+      const result = await aiService.checkConnection();
 
-        if (availableModels.length > 0) {
-          // Priority list for auto-selection
-          const priorities = ['llama3.2', 'llama3', 'mistral', 'llama2', 'gemma'];
-          const bestMatch = priorities.find(p => availableModels.some(m => m.includes(p)));
-
-          if (bestMatch) {
-            const exactMatch = availableModels.find(m => m.includes(bestMatch));
-            setModel(exactMatch);
-            console.log(`Auto-selected model: ${exactMatch}`);
-          } else {
-            setModel(availableModels[0]);
-            console.log(`Fallback to first model: ${availableModels[0]}`);
-          }
-          setConnectionStatus("Ready");
-          setIsDemoMode(false);
-        } else {
-          console.warn("No models found in Ollama. Enabling demo mode.");
-          setConnectionStatus("Demo Mode");
-          setIsDemoMode(true);
-          setModel("demo");
-        }
-      } catch (e) {
-        console.warn("Ollama not available. Enabling demo mode.", e.message);
+      if (result.connected) {
+        setModel(result.selectedModel);
+        setConnectionStatus("Ready");
+        setIsDemoMode(false);
+        console.log(`Connected to Ollama. Model: ${result.selectedModel}`);
+      } else {
+        console.warn("Ollama not available. Enabling demo mode.");
         setConnectionStatus("Demo Mode");
         setIsDemoMode(true);
         setModel("demo");
       }
-    };
-
-    fetchModels();
+    } catch (e) {
+      console.warn("Ollama not available. Enabling demo mode.", e.message);
+      setConnectionStatus("Demo Mode");
+      setIsDemoMode(true);
+      setModel("demo");
+    }
   }, []);
+
+  useEffect(() => {
+    checkConnection();
+  }, [checkConnection]);
 
   useEffect(() => {
     if (messages.length > 0 && window.innerWidth > 1024) {
@@ -299,13 +289,23 @@ function App() {
 
     // Check if there are uploaded files
     if (files.length > 0) {
-      const fileNames = files.map(f => f.name).join(', ');
-      return `I can see you've uploaded: **${fileNames}**\n\n` +
-        `In demo mode, I can't fully analyze these files, but here's what I can help with:\n\n` +
-        `1. **File Organization** - I can suggest ways to categorize your documents\n` +
-        `2. **Summarization** - Once connected to an AI backend, I can summarize content\n` +
-        `3. **Q&A** - Ask questions about your files when connected to Ollama\n\n` +
-        `*To enable full AI capabilities, please start Ollama with a model like llama3.2*`;
+      const file = files[0];
+      const content = file.extractedContent || file.content || '';
+      const contentPreview = content ? content.substring(0, 300) + '...' : 'No text content extracted.';
+      const wordCount = content ? content.split(/\s+/).length : 0;
+
+      return `### 📄 Analysis of **${file.name}**\n\n` +
+        `**File Stats:**\n` +
+        `- **Size:** ${(file.size / 1024).toFixed(2)} KB\n` +
+        `- **Words:** ${wordCount}\n` +
+        `- **Type:** ${file.type}\n\n` +
+        `**Content Preview:**\n` +
+        `> ${contentPreview.replace(/\n/g, '\n> ')}\n\n` +
+        `**Simulated Insights (Demo Mode):**\n` +
+        `1. This document appears to contain **${wordCount > 1000 ? 'detailed' : 'brief'}** information.\n` +
+        `2. Key topics typically found in this type of file include specifications, requirements, or documentation.\n` +
+        `3. To get a *real* AI summary and semantic Q&A, please ensure **Ollama** is running locally.\n\n` +
+        `*(You can retry the connection by clicking the status indicator in the sidebar)*`;
     }
 
     // Code-related responses
@@ -489,6 +489,7 @@ function App() {
           setModel(newModel);
           console.log(`Model changed to: ${newModel}`);
         }}
+        onRetryConnection={checkConnection}
       />
 
       {/* MAIN CONTENT AREA */}

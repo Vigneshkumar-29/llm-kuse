@@ -147,12 +147,33 @@ const DocumentEditor = ({ onBack }) => {
     const [viewMode, setViewMode] = useState('split'); // split, edit, preview
     const [showExportModal, setShowExportModal] = useState(false);
 
-    // AI Mock Handler (Replace with actual API)
+    // AI Content Generation Handler
     const handleAIRequest = async (fieldId) => {
         await requestAIContent(fieldId, {}, async (prompt) => {
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            return `Generated content for ${fieldId} based on context...`;
+            try {
+                const { default: aiService } = await import('../../services/AIService');
+
+                if (!aiService.isAvailable()) {
+                    await aiService.checkConnection();
+                }
+
+                if (aiService.isAvailable()) {
+                    const result = await aiService.chat(
+                        [{ role: 'user', content: prompt }],
+                        { systemPrompt: 'You are a professional document writer. Generate concise, professional content based on the request.' }
+                    );
+
+                    if (result.success) {
+                        return result.content;
+                    }
+                }
+
+                // Demo fallback
+                return `[Demo Mode] Generated content for "${fieldId}". Connect Ollama for real AI generation.`;
+            } catch (error) {
+                console.error('AI generation error:', error);
+                return `[Error] ${error.message}. Please ensure Ollama is running.`;
+            }
         });
     };
 

@@ -151,8 +151,8 @@ const QAMessage = ({ message, type }) => (
             )}
         </div>
         <div className={`flex-1 p-3 rounded-xl text-sm ${type === 'user'
-                ? 'bg-gray-100 text-gray-800'
-                : 'bg-white border border-gray-200 text-gray-700'
+            ? 'bg-gray-100 text-gray-800'
+            : 'bg-white border border-gray-200 text-gray-700'
             }`}>
             {message}
         </div>
@@ -248,28 +248,58 @@ const YouTubeEmbed = ({ onClose }) => {
         setQaHistory(prev => [...prev, { type: 'user', message: question }]);
         setIsLoadingAI(true);
 
-        // In production, this would call your AI backend
-        // For demo, we'll simulate a response
-        setTimeout(() => {
+        try {
+            // Import AIService dynamically
+            const { default: aiService } = await import('../../services/AIService');
+
+            // Check if AI is available
+            if (!aiService.isAvailable()) {
+                await aiService.checkConnection();
+            }
+
             const transcriptText = transcript
                 ? transcript.map(s => s.text).join(' ')
                 : 'Transcript not available';
 
-            // Mock AI response
-            const response = `Based on the video "${videoInfo?.title || 'this video'}", here's what I found regarding your question about "${question}":
+            if (aiService.isAvailable()) {
+                // Real AI call
+                const result = await aiService.askAboutVideo(
+                    question,
+                    transcriptText,
+                    videoInfo
+                );
 
-This is a demo response. In production, this would use the actual transcript:
+                if (result.success) {
+                    setQaHistory(prev => [...prev, { type: 'ai', message: result.content }]);
+                } else {
+                    throw new Error(result.error || 'AI request failed');
+                }
+            } else {
+                // Demo mode fallback
+                const response = `**Demo Mode Response**
 
-"${transcriptText.slice(0, 200)}..."
+Based on the video "${videoInfo?.title || 'this video'}", here's what I found regarding your question about "${question}":
 
-To enable full Q&A functionality:
-1. Connect an AI backend (OpenAI, Ollama, etc.)
-2. Implement transcript fetching via your backend
-3. Use the provided prompt generators in YouTubeService.js`;
+${transcriptText.length > 100
+                        ? `Preview of transcript: "${transcriptText.slice(0, 200)}..."`
+                        : 'Transcript preview not available.'}
 
-            setQaHistory(prev => [...prev, { type: 'ai', message: response }]);
+**To enable full AI Q&A:**
+1. Start Ollama locally (\`ollama serve\`)
+2. Pull a model (\`ollama pull llama3.2\`)
+3. Click the status indicator in the sidebar to reconnect`;
+
+                setQaHistory(prev => [...prev, { type: 'ai', message: response }]);
+            }
+        } catch (error) {
+            console.error('AI Q&A error:', error);
+            setQaHistory(prev => [...prev, {
+                type: 'ai',
+                message: `⚠️ Error: ${error.message}\n\nPlease ensure Ollama is running and try again.`
+            }]);
+        } finally {
             setIsLoadingAI(false);
-        }, 1500);
+        }
     };
 
     // Handle quick actions
@@ -404,8 +434,8 @@ To enable full Q&A functionality:
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                                                ? 'bg-white text-gray-900 shadow-sm'
-                                                : 'text-gray-500 hover:text-gray-700'
+                                            ? 'bg-white text-gray-900 shadow-sm'
+                                            : 'text-gray-500 hover:text-gray-700'
                                             }`}
                                     >
                                         <Icon size={16} />

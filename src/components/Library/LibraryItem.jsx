@@ -25,24 +25,16 @@ export const TYPE_CONFIG = {
     [DocumentType.MARKDOWN]: { icon: FileText, color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'MD' }
 };
 
-// Format relative date
+import { formatDistanceToNow } from 'date-fns';
+
+// Format relative date using date-fns
 export function formatRelativeDate(dateString) {
     if (!dateString) return 'Unknown';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-        if (diffHours === 0) {
-            const diffMins = Math.floor(diffMs / (1000 * 60));
-            return diffMins <= 1 ? 'Just now' : `${diffMins}m ago`;
-        }
-        return `${diffHours}h ago`;
-    } else if (diffDays === 1) return 'Yesterday';
-    else if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    try {
+        return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch (e) {
+        return 'Unknown';
+    }
 }
 
 // Rename Modal

@@ -74,7 +74,7 @@ const connectionLineStyle = {
 // MAIN CANVAS COMPONENT (INNER)
 // =============================================================================
 
-const CanvasInner = ({ isOpen, onClose, onMinimize, isMinimized }) => {
+const CanvasInner = ({ isOpen = true, onClose, onMinimize, isMinimized = false }) => {
     // React Flow instance
     const reactFlowInstance = useReactFlow();
     const reactFlowWrapper = useRef(null);
@@ -311,8 +311,13 @@ const CanvasInner = ({ isOpen, onClose, onMinimize, isMinimized }) => {
         );
     }
 
+    // Use relative positioning when embedded in activeMode (no onClose handler)
+    const containerClass = onClose
+        ? "fixed inset-0 z-40 bg-gray-100"
+        : "w-full h-full bg-gray-100 relative";
+
     return (
-        <div className="fixed inset-0 z-40 bg-gray-100">
+        <div className={containerClass}>
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-3 bg-white/90 backdrop-blur-sm border-b">
                 <div className="flex items-center gap-3">
@@ -325,12 +330,16 @@ const CanvasInner = ({ isOpen, onClose, onMinimize, isMinimized }) => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={onMinimize} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500">
-                        <Minimize2 size={20} />
-                    </button>
-                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500">
-                        <X size={20} />
-                    </button>
+                    {onMinimize && (
+                        <button onClick={onMinimize} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500">
+                            <Minimize2 size={20} />
+                        </button>
+                    )}
+                    {onClose && (
+                        <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500">
+                            <X size={20} />
+                        </button>
+                    )}
                 </div>
             </div>
 
