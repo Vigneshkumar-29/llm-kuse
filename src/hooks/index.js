@@ -25,3 +25,14 @@ export { default as useAI } from './useAI';
 
 // Voice Input Hook - Speech-to-Text
 export { default as useVoiceInput } from './useVoiceInput';
+
+// LocalStorage Hook - Persistent State
+export {
+    default as useLocalStorage,
+    useLocalStorageBoolean,
+    useLocalStorageArray,
+    useLocalStorageObject,
+    getLocalStorageKeys,
+    clearLocalStoragePattern,
+    getLocalStorageUsage
+} from './useLocalStorage';

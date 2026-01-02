@@ -345,19 +345,25 @@ function App() {
 
     // Help/introduction
     if (msg.includes('help') || msg.includes('hello') || msg.includes('hi') || msg.includes('start')) {
-      return `👋 **Welcome to DevSavvy!**\n\n` +
-        `I'm running in **Demo Mode** right now. Here's what you can explore:\n\n` +
-        `| Feature | Status |\n|---------|--------|\n` +
-        `| 💬 Chat Interface | ✅ Working |\n` +
-        `| 📁 File Upload | ✅ Working |\n` +
-        `| 🎨 Canvas | ✅ Working |\n` +
-        `| 📝 Documents | ✅ Working |\n` +
-        `| 🤖 AI Responses | ⚠️ Demo Only |\n\n` +
-        `**To enable full AI:**\n` +
-        `1. Install [Ollama](https://ollama.ai)\n` +
-        `2. Run: \`ollama run llama3.2\`\n` +
-        `3. Refresh this page\n\n` +
-        `Try asking me about code, explanations, or debugging!`;
+      return `👋 **Welcome to DevSavvy!**
+
+I'm running in **Demo Mode** right now. Here's what you can explore:
+
+| Feature | Status |
+|:--------|:-------|
+| 💬 Chat Interface | ✅ Working |
+| 📁 File Upload | ✅ Working |
+| 🎨 Canvas | ✅ Working |
+| 📝 Documents | ✅ Working |
+| 🤖 AI Responses | ⚠️ Demo Only |
+
+**To enable full AI:**
+
+1. Install [Ollama](https://ollama.ai)
+2. Run: \`ollama run llama3.2\`
+3. Refresh this page
+
+Try asking me about code, explanations, or debugging!`;
     }
 
     // Default response
