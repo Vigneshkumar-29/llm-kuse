@@ -2,23 +2,25 @@
  * Web Scraping Backend Server
  * ============================
  * 
- * Simple Express server that provides URL scraping capabilities.
- * This bypasses CORS restrictions by fetching content server-side.
+ * Express server that provides:
+ * 1. URL scraping capabilities (bypassing CORS)
+ * 2. YouTube transcript fetching
+ * 3. YouTube video metadata
  * 
  * Dependencies:
- * npm install express cors axios cheerio puppeteer
+ * npm install express cors axios cheerio youtube-transcript
  * 
  * Usage:
  * node server/scraping-server.js
  * 
- * @version 1.0.0
+ * @version 1.1.0
  */
 
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-const cheerio = require('cheerio');
-// const puppeteer = require('puppeteer'); // Uncomment for dynamic content
+import express from 'express';
+import cors from 'cors';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import { YoutubeTranscript } from 'youtube-transcript';
 
 const app = express();
 const PORT = process.env.SCRAPING_PORT || 3001;
@@ -28,8 +30,9 @@ const PORT = process.env.SCRAPING_PORT || 3001;
 // =============================================================================
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true
+    origin: '*',  // Allow all origins for local development
+    credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS']
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -53,7 +56,7 @@ const USER_AGENTS = [
 const getRandomUserAgent = () => USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
 // =============================================================================
-// CONTENT EXTRACTION HELPERS
+// HELPER FUNCTIONS
 // =============================================================================
 
 /**
@@ -92,9 +95,7 @@ const removeUnwantedElements = ($) => {
         '.nav', '.navbar', '.navigation', '.menu', '.sidebar',
         '.header', '.footer', '.ad', '.ads', '.advertisement',
         '.social', '.share', '.comments', '.comment-section',
-        '.cookie', '.popup', '.modal', '.overlay',
-        '#nav', '#navbar', '#navigation', '#menu', '#sidebar',
-        '#header', '#footer', '#comments', '#ad', '#ads'
+        '.cookie', '.popup', '.modal', '.overlay'
     ];
 
     selectorsToRemove.forEach(selector => {
@@ -111,18 +112,9 @@ const removeUnwantedElements = ($) => {
  */
 const extractMainContent = ($) => {
     const contentSelectors = [
-        'article',
-        '[role="main"]',
-        'main',
-        '.post-content',
-        '.article-content',
-        '.entry-content',
-        '.content',
-        '.post',
-        '.article',
-        '#content',
-        '#main',
-        '#article'
+        'article', '[role="main"]', 'main',
+        '.post-content', '.article-content', '.entry-content',
+        '.content', '.post', '.article', '#content', '#main'
     ];
 
     for (const selector of contentSelectors) {
@@ -147,10 +139,7 @@ const extractStructuredContent = ($, contentElement) => {
     contentElement.find('h1, h2, h3, h4, h5, h6').each((_, el) => {
         const text = $(el).text().trim();
         if (text) {
-            headings.push({
-                level: parseInt(el.tagName[1]),
-                text
-            });
+            headings.push({ level: parseInt(el.tagName[1]), text });
         }
     });
 
@@ -168,10 +157,7 @@ const extractStructuredContent = ($, contentElement) => {
             if (text) items.push(text);
         });
         if (items.length > 0) {
-            lists.push({
-                type: list.tagName.toLowerCase(),
-                items
-            });
+            lists.push({ type: list.tagName.toLowerCase(), items });
         }
     });
 
@@ -197,54 +183,87 @@ app.get('/api/scrape/health', (req, res) => {
     res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        version: '1.0.0'
+        version: '1.1.0'
     });
 });
 
 /**
- * Main scraping endpoint
+ * YOUTUBE TRANSCRIPT ENDPOINT
+ * Fetches transcript for a given video ID or URL
+ */
+app.get('/api/youtube/transcript', async (req, res) => {
+    const { videoId, url, lang } = req.query;
+    
+    // Extract ID from URL if not provided directly
+    let targetId = videoId;
+    if (!targetId && url) {
+        const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+        if (match) targetId = match[1];
+    }
+
+    if (!targetId) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Video ID or URL is required' 
+        });
+    }
+
+    try {
+        console.log(`Fetching transcript for video: ${targetId}`);
+        
+        // Fetch transcript using youtube-transcript package
+        const transcript = await YoutubeTranscript.fetchTranscript(targetId, {
+            lang: lang || 'en'
+        });
+
+        if (!transcript || transcript.length === 0) {
+            throw new Error('No transcript available for this video');
+        }
+
+        // Format for frontend
+        res.json({
+            success: true,
+            videoId: targetId,
+            language: lang || 'en',
+            transcript: transcript.map(item => ({
+                text: item.text,
+                start: item.offset / 1000, // Convert to seconds
+                duration: item.duration / 1000
+            }))
+        });
+
+    } catch (error) {
+        console.error(`Transcript error for ${targetId}:`, error.message);
+        
+        const isDisabled = error.message.includes('captions are disabled');
+        
+        res.status(isDisabled ? 404 : 500).json({
+            success: false,
+            videoId: targetId,
+            error: isDisabled ? 'Captions are disabled for this video' : error.message
+        });
+    }
+});
+
+/**
+ * Main scraping endpoint for generic URLs
  */
 app.post('/api/scrape', async (req, res) => {
     const { url, options = {} } = req.body;
 
     if (!url) {
-        return res.status(400).json({
-            success: false,
-            error: 'URL is required'
-        });
+        return res.status(400).json({ success: false, error: 'URL is required' });
     }
-
-    // Validate URL
-    try {
-        new URL(url);
-    } catch {
-        return res.status(400).json({
-            success: false,
-            error: 'Invalid URL format'
-        });
-    }
-
-    const {
-        extractContent = true,
-        extractMetadataFlag = true,
-        screenshot = false,
-        waitForSelector = null,
-        timeout = 20000
-    } = options;
 
     try {
         // Fetch the page
         const response = await axios.get(url, {
             headers: {
                 'User-Agent': getRandomUserAgent(),
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate',
-                'Connection': 'keep-alive'
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
             },
-            timeout,
-            maxRedirects: 5,
-            responseType: 'text'
+            timeout: options.timeout || 20000,
+            maxRedirects: 5
         });
 
         const html = response.data;
@@ -259,162 +278,31 @@ app.post('/api/scrape', async (req, res) => {
         };
 
         // Extract metadata
-        if (extractMetadataFlag) {
-            result.metadata = extractMetadata($);
-        }
+        result.metadata = extractMetadata($);
 
         // Extract content
-        if (extractContent) {
-            removeUnwantedElements($);
-            const contentElement = extractMainContent($);
-            const text = contentElement.text().replace(/\s+/g, ' ').trim();
+        removeUnwantedElements($);
+        const contentElement = extractMainContent($);
+        const text = contentElement.text().replace(/\s+/g, ' ').trim();
 
-            result.content = {
-                text: text.slice(0, 100000), // Limit content length
-                wordCount: text.split(/\s+/).length,
-                charCount: text.length,
-                truncated: text.length > 100000
-            };
+        result.content = {
+            text: text.slice(0, 100000), // Limit content length
+            wordCount: text.split(/\s+/).length,
+            charCount: text.length
+        };
 
-            result.structured = extractStructuredContent($, contentElement);
-        }
-
-        // Include raw HTML
-        result.html = html;
-
-        // Screenshot (requires puppeteer - uncomment if needed)
-        // if (screenshot) {
-        //     const browser = await puppeteer.launch({ headless: 'new' });
-        //     const page = await browser.newPage();
-        //     await page.goto(url, { waitUntil: 'networkidle0', timeout });
-        //     if (waitForSelector) {
-        //         await page.waitForSelector(waitForSelector, { timeout: 5000 }).catch(() => {});
-        //     }
-        //     const screenshotBuffer = await page.screenshot({ type: 'png', fullPage: false });
-        //     result.screenshot = screenshotBuffer.toString('base64');
-        //     await browser.close();
-        // }
+        result.structured = extractStructuredContent($, contentElement);
 
         res.json(result);
 
     } catch (error) {
         console.error(`Scraping error for ${url}:`, error.message);
-
         res.status(500).json({
             success: false,
             url,
-            error: error.message,
-            code: error.code || 'UNKNOWN'
-        });
-    }
-});
-
-/**
- * Batch scraping endpoint
- */
-app.post('/api/scrape/batch', async (req, res) => {
-    const { urls, options = {} } = req.body;
-
-    if (!urls || !Array.isArray(urls)) {
-        return res.status(400).json({
-            success: false,
-            error: 'URLs array is required'
-        });
-    }
-
-    if (urls.length > 10) {
-        return res.status(400).json({
-            success: false,
-            error: 'Maximum 10 URLs per batch request'
-        });
-    }
-
-    const results = await Promise.all(
-        urls.map(async (url) => {
-            try {
-                const response = await axios.get(url, {
-                    headers: {
-                        'User-Agent': getRandomUserAgent()
-                    },
-                    timeout: options.timeout || 15000
-                });
-
-                const $ = cheerio.load(response.data);
-                removeUnwantedElements($);
-                const contentElement = extractMainContent($);
-                const text = contentElement.text().replace(/\s+/g, ' ').trim();
-
-                return {
-                    success: true,
-                    url,
-                    metadata: extractMetadata($),
-                    content: {
-                        text: text.slice(0, 50000),
-                        wordCount: text.split(/\s+/).length
-                    }
-                };
-            } catch (error) {
-                return {
-                    success: false,
-                    url,
-                    error: error.message
-                };
-            }
-        })
-    );
-
-    res.json({
-        success: true,
-        total: urls.length,
-        successful: results.filter(r => r.success).length,
-        failed: results.filter(r => !r.success).length,
-        results
-    });
-});
-
-/**
- * Proxy endpoint for simple fetch
- */
-app.get('/api/proxy', async (req, res) => {
-    const { url } = req.query;
-
-    if (!url) {
-        return res.status(400).json({
-            success: false,
-            error: 'URL query parameter is required'
-        });
-    }
-
-    try {
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': getRandomUserAgent()
-            },
-            timeout: 15000,
-            responseType: 'text'
-        });
-
-        res.set('Content-Type', response.headers['content-type'] || 'text/html');
-        res.send(response.data);
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
             error: error.message
         });
     }
-});
-
-// =============================================================================
-// ERROR HANDLING
-// =============================================================================
-
-app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-    });
 });
 
 // =============================================================================
@@ -424,19 +312,16 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════════════════════╗
-║           Web Scraping API Server                      ║
+║           Web & YouTube Scraping Server                ║
 ╠════════════════════════════════════════════════════════╣
 ║  Status:  RUNNING                                      ║
-║  Port:    ${PORT}                                           ║
-║  Time:    ${new Date().toISOString()}            ║
-╠════════════════════════════════════════════════════════╣
+║  Port:    ${PORT}                                      ║
 ║  Endpoints:                                            ║
+║  • POST /api/scrape           - Scrape websites        ║
+║  • GET  /api/youtube/transcript - Get detailed captions║
 ║  • GET  /api/scrape/health    - Health check           ║
-║  • POST /api/scrape           - Scrape single URL      ║
-║  • POST /api/scrape/batch     - Scrape multiple URLs   ║
-║  • GET  /api/proxy?url=       - Simple proxy           ║
 ╚════════════════════════════════════════════════════════╝
     `);
 });
 
-module.exports = app;
+export default app;

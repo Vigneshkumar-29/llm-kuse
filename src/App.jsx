@@ -39,9 +39,11 @@ const useLocalStorage = (key, initialValue) => {
 
   const setValue = (value) => {
     try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      setStoredValue(currentValue => {
+        const valueToStore = value instanceof Function ? value(currentValue) : value;
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        return valueToStore;
+      });
     } catch (error) {
       console.error(error);
     }
@@ -87,6 +89,7 @@ function App() {
   const [showWorkspace, setShowWorkspace] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
   const [model, setModel] = useState(DEFAULT_MODEL);
+  const [availableModels, setAvailableModels] = useState([]);
   const [isDemoMode, setIsDemoMode] = useState(false);
 
   // File Upload State
@@ -127,18 +130,21 @@ function App() {
       const result = await aiService.checkConnection();
 
       if (result.connected) {
+        setAvailableModels(result.models || []);
         setModel(result.selectedModel);
         setConnectionStatus("Ready");
         setIsDemoMode(false);
         console.log(`Connected to Ollama. Model: ${result.selectedModel}`);
       } else {
         console.warn("Ollama not available. Enabling demo mode.");
+        setAvailableModels([]);
         setConnectionStatus("Demo Mode");
         setIsDemoMode(true);
         setModel("demo");
       }
     } catch (e) {
       console.warn("Ollama not available. Enabling demo mode.", e.message);
+      setAvailableModels([]);
       setConnectionStatus("Demo Mode");
       setIsDemoMode(true);
       setModel("demo");
@@ -488,6 +494,7 @@ Try asking me about code, explanations, or debugging!`;
         showSidebar={showSidebar}
         connectionStatus={connectionStatus}
         modelName={model}
+        availableModels={availableModels}
         onNewThread={handleNewThread}
         onUploadClick={() => setShowUploadModal(true)}
         showUploadBadge={uploadedFiles.length === 0}
@@ -495,6 +502,7 @@ Try asking me about code, explanations, or debugging!`;
         onModeChange={setActiveMode}
         onModelChange={(newModel) => {
           setModel(newModel);
+          aiService.setModel(newModel); // Ensure service is updated too
           console.log(`Model changed to: ${newModel}`);
         }}
         onRetryConnection={checkConnection}

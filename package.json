@@ -13,9 +13,13 @@
     "@tailwindcss/vite": "^4.1.18",
     "@xyflow/react": "^12.10.0",
     "autoprefixer": "^10.4.23",
+    "axios": "^1.13.4",
+    "cheerio": "^1.2.0",
     "cmdk": "^1.1.1",
+    "cors": "^2.8.6",
     "date-fns": "^4.1.0",
     "docx": "^9.5.1",
+    "express": "^5.2.1",
     "framer-motion": "^12.23.26",
     "html2canvas": "^1.4.1",
     "html2pdf.js": "^0.12.1",
@@ -33,7 +37,8 @@
     "tailwindcss": "^4.1.18",
     "tesseract.js": "^7.0.0",
     "uuid": "^13.0.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "youtube-transcript": "^1.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

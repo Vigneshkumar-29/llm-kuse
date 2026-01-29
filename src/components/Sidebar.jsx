@@ -1,40 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
-    PlusCircle, MessageSquare, Library, Upload, LayoutGrid, FileText, Youtube, Link2,
-    Search, ChevronDown, ChevronRight, Settings, User, Star, Clock, Folder, FolderOpen,
-    Hash, BarChart3, Zap, Cpu, HardDrive, Activity, X, Check, Edit2, Trash2, MoreHorizontal,
-    Sparkles, TrendingUp, Layers, Grid, BookOpen, AlertCircle, Moon, Sun, Bell, LogOut, RefreshCw
+    PlusCircle, MessageSquare, LayoutGrid, FileText, Youtube, Link2,
+    Search, ChevronDown, ChevronRight, Settings, User, Star, Clock,
+    Hash, Activity, X, Check, Sparkles, TrendingUp, Layers, BookOpen,
+    Moon, Sun, Bell, LogOut, RefreshCw, HardDrive, Upload
 } from 'lucide-react';
 
-// Mock data for demonstration
-const MOCK_PROJECTS = [
+import { useSetting, useHistory, useStorageInfo, useDatabase } from '../hooks/useDatabase';
+
+// Default fallback projects
+const DEFAULT_PROJECTS = [
     { id: 1, name: 'Web Development', count: 12, color: '#6366f1', starred: true },
     { id: 2, name: 'AI Research', count: 8, color: '#10b981', starred: true },
     { id: 3, name: 'Mobile App', count: 5, color: '#f59e0b', starred: false },
-    { id: 4, name: 'Data Analysis', count: 15, color: '#ec4899', starred: false },
-    { id: 5, name: 'Personal Notes', count: 23, color: '#8b5cf6', starred: false },
-];
-
-const MOCK_RECENT_ITEMS = [
-    { id: 1, title: 'React Component Optimization', type: 'chat', time: '2 min ago', icon: MessageSquare },
-    { id: 2, title: 'API Integration Guide', type: 'document', time: '15 min ago', icon: FileText },
-    { id: 3, title: 'ML Pipeline Diagram', type: 'canvas', time: '1 hour ago', icon: LayoutGrid },
-    { id: 4, title: 'Python Tutorial Video', type: 'youtube', time: '3 hours ago', icon: Youtube },
-    { id: 5, title: 'Documentation Reference', type: 'url', time: 'Yesterday', icon: Link2 },
-];
-
-const MOCK_MODELS = [
-    { id: 'llama3.2', name: 'Llama 3.2', description: 'Fast & efficient', tokens: '128K', speed: 'fast' },
-    { id: 'llama3.2:8b', name: 'Llama 3.2 8B', description: 'Balanced performance', tokens: '128K', speed: 'medium' },
-    { id: 'mistral', name: 'Mistral', description: 'Excellent reasoning', tokens: '32K', speed: 'fast' },
-    { id: 'codellama', name: 'Code Llama', description: 'Code specialist', tokens: '16K', speed: 'fast' },
-    { id: 'gemma:7b', name: 'Gemma 7B', description: 'Google quality', tokens: '8K', speed: 'medium' },
 ];
 
 const Sidebar = ({
     showSidebar,
     connectionStatus,
     modelName,
+    availableModels = [],
     onNewThread,
     onUploadClick,
     showUploadBadge,
@@ -53,28 +38,30 @@ const Sidebar = ({
     });
     const [showModelDropdown, setShowModelDropdown] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
-    const [selectedModel, setSelectedModel] = useState(modelName || 'llama3.2');
     const [isDarkMode, setIsDarkMode] = useState(false);
-    // eslint-disable-next-line
-    const [projects, setProjects] = useState(MOCK_PROJECTS);
-    // eslint-disable-next-line
-    const [editingProject, setEditingProject] = useState(null);
-    // eslint-disable-next-line
-    const [projectMenuOpen, setProjectMenuOpen] = useState(null);
+    
+    // Database Hooks
+    // savedProjects will be the projects array. setSavedProjects updates it.
+    const [savedProjects, setSavedProjects, projectsLoading] = useSetting('sidebar_projects', DEFAULT_PROJECTS);
+    const { history: actionHistory } = useHistory();
+    const storageInfo = useStorageInfo();
+    const { info: dbInfo } = useDatabase();
+
+    // Use saved projects or defaults if loading/null
+    const projects = savedProjects || DEFAULT_PROJECTS;
+
+    // Map history to recent items display
+    const recentItems = actionHistory.map((item, idx) => ({
+        id: `hist_${idx}`,
+        title: item.action,
+        type: 'history',
+        time: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        icon: Clock
+    })).slice(0, 5); 
 
     // Refs
     const modelDropdownRef = useRef(null);
     const userMenuRef = useRef(null);
-
-    // Usage stats (mock data - would be real in production)
-    const [usageStats] = useState({
-        tokensUsed: 45283,
-        tokensLimit: 100000,
-        requestsToday: 127,
-        avgResponseTime: 1.2,
-        storageUsed: 256,
-        storageLimit: 1024
-    });
 
     // Close dropdowns on outside click
     useEffect(() => {
@@ -96,21 +83,37 @@ const Sidebar = ({
     };
 
     // Handle model selection
-    const handleModelSelect = (model) => {
-        setSelectedModel(model.id);
+    const handleModelSelect = (modelId) => {
+        onModelChange(modelId);
         setShowModelDropdown(false);
-        if (onModelChange) onModelChange(model.id);
     };
 
     // Toggle project star
     const toggleProjectStar = (projectId) => {
-        setProjects(prev => prev.map(p =>
+        const newProjects = projects.map(p =>
             p.id === projectId ? { ...p, starred: !p.starred } : p
-        ));
+        );
+        setSavedProjects(newProjects);
+    };
+
+    // Create new project
+    const handleNewProject = () => {
+        const name = prompt("Enter project name:");
+        if (name) {
+            const newProject = {
+                id: Date.now(),
+                name,
+                count: 0,
+                color: '#' + Math.floor(Math.random()*16777215).toString(16),
+                starred: false
+            };
+            const newProjects = [...projects, newProject];
+            setSavedProjects(newProjects);
+        }
     };
 
     // Filter items based on search
-    const filteredRecent = MOCK_RECENT_ITEMS.filter(item =>
+    const filteredRecent = recentItems.filter(item =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -118,12 +121,21 @@ const Sidebar = ({
         project.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Get current model info
-    const currentModel = MOCK_MODELS.find(m => m.id === selectedModel) || MOCK_MODELS[0];
+    // Prepare model list
+    const modelList = availableModels.length > 0 
+        ? availableModels.map(m => ({ 
+            id: m, 
+            name: m, 
+            description: 'Ollama Model', 
+            tokens: 'unknown', 
+            speed: 'unknown' 
+          }))
+        : [
+            { id: 'llama3.2', name: 'Llama 3.2', description: 'Fast standard', tokens: '128K' },
+            { id: 'mistral', name: 'Mistral', description: 'Reasoning', tokens: '32K' }
+          ];
 
-    // Usage percentage calculations
-    const tokensPercentage = (usageStats.tokensUsed / usageStats.tokensLimit) * 100;
-    const storagePercentage = (usageStats.storageUsed / usageStats.storageLimit) * 100;
+    const currentModelInfo = modelList.find(m => m.id === modelName) || { name: modelName || 'Select Model' };
 
     return (
         <aside className={`
@@ -133,7 +145,7 @@ const Sidebar = ({
             border-r border-slate-200/80 flex flex-col relative
             overflow-hidden whitespace-nowrap shadow-sm
         `}>
-            {/* Header with Logo & User */}
+            {/* Header */}
             <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100 min-w-[18rem] bg-white/80 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25">
@@ -162,7 +174,6 @@ const Sidebar = ({
                         <User size={14} className="text-indigo-600" />
                     </button>
 
-                    {/* User Dropdown Menu */}
                     {showUserMenu && (
                         <div className="absolute right-0 top-10 w-56 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-scale-in">
                             <div className="p-3 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-purple-50">
@@ -170,27 +181,20 @@ const Sidebar = ({
                                 <div className="text-xs text-slate-500">guest@devsavvy.ai</div>
                             </div>
                             <div className="p-2">
-                                <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                                    <Settings size={16} />
-                                    Settings
-                                </button>
                                 <button
-                                    onClick={() => setIsDarkMode(!isDarkMode)}
+                                    onClick={() => {
+                                        setIsDarkMode(!isDarkMode);
+                                        // Ideally toggle theme context here
+                                    }}
                                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition-colors"
                                 >
                                     {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
                                     {isDarkMode ? 'Light Mode' : 'Dark Mode'}
                                 </button>
-                                <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                                    <Bell size={16} />
-                                    Notifications
+                                <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition-colors">
+                                    <LogOut size={16} />
+                                    Sign Out
                                 </button>
-                                <div className="border-t border-slate-100 mt-2 pt-2">
-                                    <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition-colors">
-                                        <LogOut size={16} />
-                                        Sign Out
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     )}
@@ -221,9 +225,6 @@ const Sidebar = ({
                             <X size={14} className="text-slate-400" />
                         </button>
                     )}
-                    <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 text-[10px] text-slate-500 font-mono">
-                        ⌘K
-                    </kbd>
                 </div>
             </div>
 
@@ -234,48 +235,39 @@ const Sidebar = ({
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 hover:border-indigo-200 transition-all group"
                 >
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-sm">
-                        <Cpu size={14} className="text-white" />
+                        <Sparkles size={14} className="text-white" />
                     </div>
                     <div className="flex-1 text-left">
-                        <div className="text-sm font-medium text-slate-700">{currentModel.name}</div>
-                        <div className="text-[10px] text-slate-500">{currentModel.tokens} context</div>
+                        <div className="text-sm font-medium text-slate-700">{currentModelInfo.name}</div>
+                        <div className="text-[10px] text-slate-500">
+                             {availableModels.length > 0 ? `${availableModels.length} models available` : 'Demo Mode'}
+                        </div>
                     </div>
                     <ChevronDown size={16} className={`text-slate-400 transition-transform ${showModelDropdown ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Model Dropdown */}
                 {showModelDropdown && (
-                    <div className="mt-2 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-scale-in">
-                        <div className="p-2 border-b border-slate-100 bg-slate-50">
+                    <div className="mt-2 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-scale-in absolute w-[90%] left-[5%]">
+                         <div className="p-2 border-b border-slate-100 bg-slate-50">
                             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider px-2">Select Model</span>
                         </div>
                         <div className="p-2 max-h-64 overflow-y-auto">
-                            {MOCK_MODELS.map((model) => (
+                            {modelList.map((model) => (
                                 <button
                                     key={model.id}
-                                    onClick={() => handleModelSelect(model)}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${selectedModel === model.id
+                                    onClick={() => handleModelSelect(model.id)}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${modelName === model.id
                                         ? 'bg-indigo-50 border border-indigo-200'
                                         : 'hover:bg-slate-50 border border-transparent'
                                         }`}
                                 >
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${selectedModel === model.id
-                                        ? 'bg-indigo-500 text-white'
-                                        : 'bg-slate-100 text-slate-500'
-                                        }`}>
-                                        <Sparkles size={14} />
-                                    </div>
                                     <div className="flex-1 text-left">
                                         <div className="text-sm font-medium text-slate-700">{model.name}</div>
-                                        <div className="text-[10px] text-slate-500">{model.description} • {model.tokens}</div>
+                                        {model.description && <div className="text-[10px] text-slate-500">{model.description}</div>}
                                     </div>
-                                    {selectedModel === model.id && (
+                                    {modelName === model.id && (
                                         <Check size={16} className="text-indigo-500" />
                                     )}
-                                    <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${model.speed === 'fast' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
-                                        }`}>
-                                        {model.speed}
-                                    </span>
                                 </button>
                             ))}
                         </div>
@@ -283,11 +275,10 @@ const Sidebar = ({
                 )}
             </div>
 
-            {/* Scrollable Content Area */}
+            {/* Navigation & Projects */}
             <div className="flex-1 overflow-y-auto min-w-[18rem] px-3 space-y-1">
-
-                {/* Workspace Section */}
-                <div className="mb-4">
+                 {/* Workspace Section */}
+                 <div className="mb-4">
                     <button
                         onClick={() => toggleSection('workspace')}
                         className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-800 transition-colors"
@@ -299,11 +290,11 @@ const Sidebar = ({
                     {expandedSections.workspace && (
                         <div className="mt-1 space-y-1">
                             {[
-                                { mode: 'chat', icon: MessageSquare, label: 'AI Chat', badge: null },
-                                { mode: 'canvas', icon: LayoutGrid, label: 'Canvas', badge: null },
-                                { mode: 'documents', icon: FileText, label: 'Documents', badge: null },
-                                { mode: 'youtube', icon: Youtube, label: 'YouTube', badge: null },
-                                { mode: 'url', icon: Link2, label: 'URL Extract', badge: null },
+                                { mode: 'chat', icon: MessageSquare, label: 'AI Chat' },
+                                { mode: 'canvas', icon: LayoutGrid, label: 'Canvas' },
+                                { mode: 'documents', icon: FileText, label: 'Documents' },
+                                { mode: 'youtube', icon: Youtube, label: 'YouTube' },
+                                { mode: 'url', icon: Link2, label: 'URL Extract' },
                             ].map((item) => (
                                 <button
                                     key={item.mode}
@@ -315,11 +306,6 @@ const Sidebar = ({
                                 >
                                     <item.icon size={18} />
                                     {item.label}
-                                    {item.badge && (
-                                        <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white">
-                                            {item.badge}
-                                        </span>
-                                    )}
                                 </button>
                             ))}
                         </div>
@@ -354,8 +340,7 @@ const Sidebar = ({
                         className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-800 transition-colors"
                     >
                         <span className="flex items-center gap-2">
-                            <Layers size={12} />
-                            Projects
+                             <Layers size={12} /> Projects
                         </span>
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] font-normal text-slate-400">{filteredProjects.length}</span>
@@ -370,10 +355,7 @@ const Sidebar = ({
                                     key={project.id}
                                     className="group flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all cursor-pointer"
                                 >
-                                    <div
-                                        className="w-3 h-3 rounded-sm"
-                                        style={{ backgroundColor: project.color }}
-                                    />
+                                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: project.color }} />
                                     <span className="flex-1 text-sm text-slate-700 truncate">{project.name}</span>
                                     <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
                                         {project.count}
@@ -385,41 +367,34 @@ const Sidebar = ({
                                         }}
                                         className="opacity-0 group-hover:opacity-100 transition-opacity"
                                     >
-                                        <Star
-                                            size={14}
-                                            className={project.starred ? 'text-amber-500 fill-amber-500' : 'text-slate-400'}
-                                        />
+                                        <Star size={14} className={project.starred ? 'text-amber-500 fill-amber-500' : 'text-slate-400'} />
                                     </button>
                                 </div>
                             ))}
-                            <button className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
-                                <PlusCircle size={14} />
-                                New Project
+                            <button 
+                                onClick={handleNewProject}
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
+                            >
+                                <PlusCircle size={14} /> New Project
                             </button>
                         </div>
                     )}
                 </div>
 
-                {/* Recent Items Section */}
-                <div className="mb-4">
+                 {/* Recent Items Section */}
+                 <div className="mb-4">
                     <button
                         onClick={() => toggleSection('recent')}
                         className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-800 transition-colors"
                     >
-                        <span className="flex items-center gap-2">
-                            <Clock size={12} />
-                            Recent
-                        </span>
+                        <span className="flex items-center gap-2"><Clock size={12} /> Recent</span>
                         <ChevronRight size={14} className={`transition-transform ${expandedSections.recent ? 'rotate-90' : ''}`} />
                     </button>
 
                     {expandedSections.recent && (
                         <div className="mt-1 space-y-0.5">
-                            {filteredRecent.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all cursor-pointer"
-                                >
+                            {filteredRecent.length > 0 ? filteredRecent.map((item) => (
+                                <div key={item.id} className="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all cursor-pointer">
                                     <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
                                         <item.icon size={14} className="text-slate-500 group-hover:text-indigo-600" />
                                     </div>
@@ -428,89 +403,52 @@ const Sidebar = ({
                                         <div className="text-[10px] text-slate-400">{item.time}</div>
                                     </div>
                                 </div>
-                            ))}
-                            <button className="w-full text-center text-xs text-indigo-500 hover:text-indigo-700 py-2 transition-colors">
-                                View all recent items →
-                            </button>
+                            )) : (
+                                <div className="px-3 py-2 text-xs text-slate-400 italic">No recent activity</div>
+                            )}
                         </div>
                     )}
                 </div>
 
-                {/* Library Button */}
-                <button
+                 {/* Library Button */}
+                 <button
                     onClick={() => onModeChange('library')}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-all mb-4"
                 >
-                    <BookOpen size={18} />
-                    Knowledge Library
-                    <span className="ml-auto text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">48</span>
+                    <BookOpen size={18} /> Knowledge Library
+                    <span className="ml-auto text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                        {dbInfo ? dbInfo.storage.documents.count : 0}
+                    </span>
                 </button>
             </div>
 
-            {/* Usage Statistics Footer */}
-            <div className="p-3 bg-white border-t border-slate-100 min-w-[18rem]">
-                {/* Mini Stats */}
+             {/* Usage Statistics Footer */}
+             <div className="p-3 bg-white border-t border-slate-100 min-w-[18rem]">
                 <div className="grid grid-cols-3 gap-2 mb-3">
                     <div className="text-center p-2 rounded-lg bg-slate-50">
-                        <div className="text-lg font-bold text-slate-800">{usageStats.requestsToday}</div>
-                        <div className="text-[9px] text-slate-500 uppercase">Requests</div>
+                        <div className="text-lg font-bold text-slate-800">{storageInfo.documentsCount}</div>
+                        <div className="text-[9px] text-slate-500 uppercase">Docs</div>
                     </div>
                     <div className="text-center p-2 rounded-lg bg-slate-50">
-                        <div className="text-lg font-bold text-slate-800">{usageStats.avgResponseTime}s</div>
-                        <div className="text-[9px] text-slate-500 uppercase">Avg Time</div>
+                        <div className="text-lg font-bold text-slate-800">{storageInfo.blobsCount}</div>
+                        <div className="text-[9px] text-slate-500 uppercase">Files</div>
                     </div>
                     <div className="text-center p-2 rounded-lg bg-slate-50">
-                        <div className="text-lg font-bold text-emerald-600">
-                            <Activity size={16} className="mx-auto" />
-                        </div>
+                        <div className="text-lg font-bold text-emerald-600"><Activity size={16} className="mx-auto" /></div>
                         <div className="text-[9px] text-slate-500 uppercase">Active</div>
                     </div>
                 </div>
-
-                {/* Token Usage Bar */}
-                <div className="mb-2">
-                    <div className="flex items-center justify-between text-[10px] mb-1">
-                        <span className="text-slate-500 flex items-center gap-1">
-                            <Zap size={10} />
-                            Tokens
-                        </span>
-                        <span className="text-slate-600 font-medium">
-                            {(usageStats.tokensUsed / 1000).toFixed(1)}K / {usageStats.tokensLimit / 1000}K
-                        </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                            className={`h-full rounded-full transition-all ${tokensPercentage > 80 ? 'bg-rose-500' : tokensPercentage > 60 ? 'bg-amber-500' : 'bg-gradient-to-r from-indigo-500 to-purple-500'
-                                }`}
-                            style={{ width: `${tokensPercentage}%` }}
-                        />
-                    </div>
-                </div>
-
-                {/* Storage Usage Bar */}
                 <div className="mb-3">
                     <div className="flex items-center justify-between text-[10px] mb-1">
-                        <span className="text-slate-500 flex items-center gap-1">
-                            <HardDrive size={10} />
-                            Storage
-                        </span>
-                        <span className="text-slate-600 font-medium">
-                            {usageStats.storageUsed} MB / {usageStats.storageLimit / 1024} GB
-                        </span>
+                        <span className="text-slate-500 flex items-center gap-1"><HardDrive size={10} /> Storage</span>
+                        <span className="text-slate-600 font-medium">{storageInfo.usageFormatted} / {storageInfo.quotaFormatted}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                            className={`h-full rounded-full transition-all ${storagePercentage > 80 ? 'bg-rose-500' : 'bg-emerald-500'
-                                }`}
-                            style={{ width: `${storagePercentage}%` }}
-                        />
+                        <div className={`h-full rounded-full transition-all ${storageInfo.usagePercent > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${storageInfo.usagePercent}%` }} />
                     </div>
                 </div>
-
-                {/* Upgrade Button */}
                 <button className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600 shadow-lg shadow-indigo-500/25 transition-all">
-                    <TrendingUp size={14} />
-                    Upgrade to Pro
+                    <TrendingUp size={14} /> Upgrade to Pro
                 </button>
             </div>
         </aside>

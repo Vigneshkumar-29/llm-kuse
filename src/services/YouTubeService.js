@@ -129,29 +129,31 @@ export const fetchVideoInfo = async (videoId) => {
  * This is a mock implementation that demonstrates the expected format.
  */
 export const fetchTranscript = async (videoId, language = 'en') => {
-    // In production, replace with actual API call:
-    // const response = await fetch(`/api/youtube/transcript/${videoId}?lang=${language}`);
+    try {
+        // Call our local backend proxy which connects to the scraping server
+        const response = await fetch(`/api/youtube/transcript?videoId=${videoId}&lang=${language}`);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to fetch transcript');
+        }
 
-    // Mock implementation for demo
-    console.log(`Fetching transcript for video: ${videoId} in language: ${language}`);
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Return mock transcript structure
-    // In production, this would come from your backend
-    return {
-        success: false,
-        message: 'Transcript fetching requires a backend service. Connect your API endpoint.',
-        transcript: null,
-        availableLanguages: [],
-        // Expected transcript format when available:
-        // transcript: [
-        //     { text: 'Hello and welcome', start: 0, duration: 2.5 },
-        //     { text: 'to this video', start: 2.5, duration: 1.8 },
-        //     ...
-        // ]
-    };
+        const data = await response.json();
+        return {
+            success: true,
+            transcript: data.transcript,
+            language: data.language,
+            availableLanguages: ['en'] // In a full implementation, we'd fetch available langs first
+        };
+    } catch (error) {
+        console.error('Transcript API Error:', error);
+        return {
+            success: false,
+            message: error.message || 'Failed to fetch transcript. Ensure the backend server is running.',
+            transcript: null,
+            availableLanguages: []
+        };
+    }
 };
 
 /**
