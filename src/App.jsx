@@ -1,18 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Menu, User, Sparkles, MessageSquare, BookOpen,
-  FileText, Search, Paperclip, Download, LayoutGrid, ArrowRight
+  Menu, User, Sparkles, MessageSquare,
+  Paperclip, Download, ArrowRight
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from './components/CodeBlock';
 import Sidebar from './components/Sidebar';
-import WorkspacePanel from './components/WorkspacePanel';
 import FileUploadModal from './components/FileUploadModal';
 import ContextSettings, { SourceReferenceDisplay } from './components/ContextSettings';
 import { buildFileContext, extractSourceReferences } from './services/FileProcessor';
-import { DocumentEditor } from './components/Documents';
-import Library from './components/Library/Library';
 import CommandPalette from './components/CommandPalette';
 import aiService from './services/AIService';
 import ExportService from './services/ExportService';
@@ -49,30 +46,14 @@ const useLocalStorage = (key, initialValue) => {
   return [storedValue, setValue];
 };
 
-// Professional Feature Cards
-const FEATURE_CARDS = [
-  {
-    id: 'chat',
-    icon: <MessageSquare className="text-blue-600" size={28} />,
-    title: "Intelligent Chat",
-    desc: "Have natural conversations with AI powered by local LLMs",
-    gradient: "from-blue-50 to-blue-100"
-  },
-  {
-    id: 'documents',
-    icon: <FileText className="text-green-600" size={28} />,
-    title: "Document Processing",
-    desc: "Upload and analyze PDFs, Word docs, images, and more",
-    gradient: "from-green-50 to-green-100"
-  },
-  {
-    id: 'library',
-    icon: <BookOpen className="text-purple-600" size={28} />,
-    title: "Smart Library",
-    desc: "Organize, search, and manage all your documents",
-    gradient: "from-purple-50 to-purple-100"
-  },
-];
+// Professional Feature Card
+const FEATURE_CARD = {
+  id: 'chat',
+  icon: <MessageSquare className="text-blue-600" size={28} />,
+  title: "Intelligent AI Chat",
+  desc: "Have natural conversations with AI powered by local LLMs for complete privacy",
+  gradient: "from-blue-50 to-blue-100"
+};
 
 function App() {
   // State
@@ -80,7 +61,6 @@ function App() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
-  const [showWorkspace, setShowWorkspace] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [availableModels, setAvailableModels] = useState([]);
@@ -192,9 +172,6 @@ function App() {
         referencedSources: []
       }]);
 
-      if (demoResponse.includes("```")) {
-        setShowWorkspace(true);
-      }
       setIsLoading(false);
       return;
     }
@@ -257,10 +234,6 @@ function App() {
         };
 
         setMessages(prev => [...prev, enrichedMessage]);
-
-        if (data.message.content.includes("```")) {
-          setShowWorkspace(true);
-        }
 
         // Auto-expand context settings if sources were cited
         if (sources.length > 0) {
@@ -384,7 +357,6 @@ Try asking me about code, explanations, or debugging!`;
 
   const handleNewThread = useCallback(() => {
     setMessages([]);
-    setShowWorkspace(false);
     setInput("");
     setUploadedFiles([]);
     setSourceOnlyMode(false);
@@ -416,8 +388,6 @@ Try asking me about code, explanations, or debugging!`;
         const cmd = action.command;
         if (cmd.id === 'action-clear') {
           handleNewThread();
-        } else if (cmd.id === 'action-workspace') {
-          setShowWorkspace(!showWorkspace);
         } else if (cmd.id === 'settings-theme') {
           // Theme toggle would go here
           console.log('Toggle theme');
@@ -427,40 +397,7 @@ Try asking me about code, explanations, or debugging!`;
       default:
         break;
     }
-  }, [showWorkspace, handleNewThread]);
-
-  // Handle adding content from Library/Documents to Chat
-  const handleAddToChat = useCallback((content) => {
-    setActiveMode('chat');
-    // If content is an object (document), extract text or name
-    const textToAdd = typeof content === 'string' ? content : (content.content || `Ref: ${content.name}`);
-
-    setInput(prev => {
-      const separator = prev ? '\n\n' : '';
-      return `${prev}${separator}${textToAdd}`;
-    });
-
-    // Focus input after a short delay to allow mode switch
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 100);
-  }, []);
-
-  // Global keyboard shortcut for Command Palette
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Cmd/Ctrl + K to open command palette
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setShowCommandPalette(prev => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleNewThread]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-primary selection:bg-accent/20 font-sans">
@@ -513,7 +450,7 @@ Try asking me about code, explanations, or debugging!`;
         {activeMode === 'chat' && (
           <>
             {/* CHAT PANEL */}
-            <div className={`flex-1 flex flex-col h-full bg-background transition-all duration-500 ${showWorkspace ? 'max-w-[50%]' : 'max-w-full'}`}>
+            <div className="flex-1 flex flex-col h-full bg-background transition-all duration-500">
 
               {/* Header */}
               <header className="h-16 flex items-center justify-between px-6 z-10 border-b border-transparent">
@@ -529,18 +466,6 @@ Try asking me about code, explanations, or debugging!`;
 
                 <div className="flex items-center gap-3">
                   {/* Command Palette Button */}
-                  <button
-                    onClick={() => setShowCommandPalette(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm transition-colors"
-                    title="Command Palette (Ctrl+K)"
-                  >
-                    <Search size={14} />
-                    <span className="hidden md:inline">Search...</span>
-                    <kbd className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white text-[10px] text-slate-500 font-mono border border-slate-200">
-                      ⌘K
-                    </kbd>
-                  </button>
-
                   {/* Export Button - Only show when there are messages */}
                   {messages.length > 0 && (
                     <button
@@ -552,13 +477,6 @@ Try asking me about code, explanations, or debugging!`;
                     </button>
                   )}
 
-                  <button
-                    onClick={() => setShowWorkspace(!showWorkspace)}
-                    className={`p-2 rounded-lg transition-colors ${showWorkspace ? 'bg-accent/10 text-accent' : 'hover:bg-black/5 text-secondary'}`}
-                    title="Toggle Workspace Split View"
-                  >
-                    <LayoutGrid size={20} />
-                  </button>
                   <div className="w-8 h-8 rounded-full bg-surface-highlight border border-black/5 flex items-center justify-center">
                     <User size={16} className="text-secondary" />
                   </div>
@@ -592,20 +510,14 @@ Try asking me about code, explanations, or debugging!`;
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl px-6">
-                      {FEATURE_CARDS.map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => setActiveMode(item.id)}
-                          className={`bg-gradient-to-br ${item.gradient} p-6 rounded-2xl border border-black/5 text-left transition-all hover:scale-[1.02] hover:shadow-lg group`}
-                        >
-                          <div className="mb-4 bg-white/60 w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-sm group-hover:scale-110 transition-transform">
-                            {item.icon}
-                          </div>
-                          <h3 className="font-serif text-xl font-medium text-gray-900 mb-1">{item.title}</h3>
-                          <p className="text-sm text-gray-600">{item.desc}</p>
-                        </button>
-                      ))}
+                    <div className="w-full max-w-md px-6 mx-auto">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-2xl border border-black/5 text-center transition-all hover:scale-[1.02] hover:shadow-xl">
+                        <div className="mb-6 bg-white/60 w-16 h-16 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-lg mx-auto">
+                          {FEATURE_CARD.icon}
+                        </div>
+                        <h3 className="font-serif text-2xl font-bold text-gray-900 mb-3">{FEATURE_CARD.title}</h3>
+                        <p className="text-base text-gray-600 leading-relaxed">{FEATURE_CARD.desc}</p>
+                      </div>
                     </div>
                   </div>
 
@@ -696,7 +608,7 @@ Try asking me about code, explanations, or debugging!`;
 
               {/* FLOATING COMMAND BAR */}
               <div className="absolute bottom-8 left-0 right-0 px-4 pointer-events-none z-20">
-                <div className={`mx-auto w-full pointer-events-auto transition-all ${showWorkspace ? 'max-w-xl' : 'max-w-3xl'}`}>
+                <div className="mx-auto w-full max-w-3xl pointer-events-auto transition-all">
 
                   {/* Context Settings Panel (replaces simple file indicator) */}
                   {uploadedFiles.length > 0 && (
@@ -764,29 +676,7 @@ Try asking me about code, explanations, or debugging!`;
                 </div>
               </div>
             </div>
-
-            {/* MODULAR WORKSPACE PANEL */}
-            <WorkspacePanel
-              showWorkspace={showWorkspace}
-              onClose={() => setShowWorkspace(false)}
-            />
           </>
-        )}
-
-        {activeMode === 'documents' && (
-          <div className="w-full h-full">
-            <DocumentEditor />
-          </div>
-        )}
-
-        {activeMode === 'library' && (
-          <div className="w-full h-full">
-            <Library
-              isOpen={true}
-              onAddToChat={handleAddToChat}
-              onUploadClick={() => setShowUploadModal(true)}
-            />
-          </div>
         )}
 
       </div>

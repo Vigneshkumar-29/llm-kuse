@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-    MessageSquare, FileText, BookOpen, Settings, User,
+    MessageSquare, User,
     Search, ChevronRight, RefreshCw, Upload, Plus,
     Moon, Sun, LogOut, Sparkles, Clock, Check
 } from 'lucide-react';
@@ -200,24 +200,13 @@ const Sidebar = ({
             {/* Navigation */}
             <div className="flex-1 overflow-y-auto min-w-[18rem] px-4 py-4">
                 <div className="space-y-1">
-                    {[
-                        { mode: 'chat', icon: MessageSquare, label: 'AI Chat', color: 'blue' },
-                        { mode: 'documents', icon: FileText, label: 'Documents', color: 'green' },
-                        { mode: 'library', icon: BookOpen, label: 'Library', color: 'purple' },
-                    ].map((item) => (
-                        <button
-                            key={item.mode}
-                            onClick={() => onModeChange(item.mode)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                                activeMode === item.mode
-                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                                    : 'text-gray-700 hover:bg-gray-50'
-                            }`}
-                        >
-                            <item.icon size={20} />
-                            {item.label}
-                        </button>
-                    ))}
+                    <button
+                        onClick={() => onModeChange('chat')}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
+                    >
+                        <MessageSquare size={20} />
+                        AI Chat
+                    </button>
                 </div>
 
                 {/* Recent Activity */}
