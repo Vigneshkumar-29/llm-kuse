@@ -558,6 +558,7 @@ export async function importDatabase(data, options = {}) {
 
     for (const [storeName, records] of Object.entries(data.stores || {})) {
         if (!Object.values(DB_CONFIG.stores).includes(storeName)) continue;
+        // Skip blobs during import unless explicitly requested (usually handled separately)
         if (storeName === 'blobs' && !options.includeBlobs) continue;
 
         const tx = db.transaction(storeName, 'readwrite');

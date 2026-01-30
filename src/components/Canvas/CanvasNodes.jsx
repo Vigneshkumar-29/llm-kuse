@@ -826,82 +826,84 @@ CodeNode.displayName = 'CodeNode';
 // 5. DOCUMENT REFERENCE - LINK TO LIBRARY ITEM
 // =============================================================================
 
+const DOCUMENT_ICONS = {
+    pdf: FileText,
+    doc: File,
+    docx: File,
+    txt: FileText,
+    md: FileText,
+    csv: FileSpreadsheet,
+    xlsx: FileSpreadsheet,
+    xls: FileSpreadsheet,
+    json: FileCode,
+    js: FileCode,
+    ts: FileCode,
+    py: FileCode,
+    html: FileCode,
+    css: FileCode,
+    png: FileImage,
+    jpg: FileImage,
+    jpeg: FileImage,
+    gif: FileImage,
+    webp: FileImage,
+    svg: FileImage,
+    mp4: FileVideo,
+    webm: FileVideo,
+    mp3: FileAudio,
+    wav: FileAudio
+};
+
 const getDocumentIcon = (type) => {
-    const icons = {
-        pdf: FileText,
-        doc: File,
-        docx: File,
-        txt: FileText,
-        md: FileText,
-        csv: FileSpreadsheet,
-        xlsx: FileSpreadsheet,
-        xls: FileSpreadsheet,
-        json: FileCode,
-        js: FileCode,
-        ts: FileCode,
-        py: FileCode,
-        html: FileCode,
-        css: FileCode,
-        png: FileImage,
-        jpg: FileImage,
-        jpeg: FileImage,
-        gif: FileImage,
-        webp: FileImage,
-        svg: FileImage,
-        mp4: FileVideo,
-        webm: FileVideo,
-        mp3: FileAudio,
-        wav: FileAudio
-    };
-    return icons[type?.toLowerCase()] || File;
+    return DOCUMENT_ICONS[type?.toLowerCase()] || File;
+};
+
+const DOCUMENT_COLORS = {
+    pdf: 'red',
+    doc: 'blue',
+    docx: 'blue',
+    txt: 'gray',
+    md: 'gray',
+    csv: 'emerald',
+    xlsx: 'emerald',
+    xls: 'emerald',
+    json: 'amber',
+    js: 'amber',
+    ts: 'blue',
+    py: 'blue',
+    html: 'orange',
+    css: 'purple',
+    png: 'pink',
+    jpg: 'pink',
+    jpeg: 'pink',
+    gif: 'pink',
+    webp: 'pink',
+    svg: 'pink',
+    mp4: 'red',
+    webm: 'red',
+    mp3: 'purple',
+    wav: 'purple'
+};
+
+const COLOR_CLASSES = {
+    red: 'bg-red-100 text-red-600 border-red-200',
+    blue: 'bg-blue-100 text-blue-600 border-blue-200',
+    gray: 'bg-gray-100 text-gray-600 border-gray-200',
+    emerald: 'bg-emerald-100 text-emerald-600 border-emerald-200',
+    amber: 'bg-amber-100 text-amber-600 border-amber-200',
+    orange: 'bg-orange-100 text-orange-600 border-orange-200',
+    purple: 'bg-purple-100 text-purple-600 border-purple-200',
+    pink: 'bg-pink-100 text-pink-600 border-pink-200'
 };
 
 const getDocumentColor = (type) => {
-    const colors = {
-        pdf: 'red',
-        doc: 'blue',
-        docx: 'blue',
-        txt: 'gray',
-        md: 'gray',
-        csv: 'emerald',
-        xlsx: 'emerald',
-        xls: 'emerald',
-        json: 'amber',
-        js: 'amber',
-        ts: 'blue',
-        py: 'blue',
-        html: 'orange',
-        css: 'purple',
-        png: 'pink',
-        jpg: 'pink',
-        jpeg: 'pink',
-        gif: 'pink',
-        webp: 'pink',
-        svg: 'pink',
-        mp4: 'red',
-        webm: 'red',
-        mp3: 'purple',
-        wav: 'purple'
-    };
-
-    const colorClasses = {
-        red: 'bg-red-100 text-red-600 border-red-200',
-        blue: 'bg-blue-100 text-blue-600 border-blue-200',
-        gray: 'bg-gray-100 text-gray-600 border-gray-200',
-        emerald: 'bg-emerald-100 text-emerald-600 border-emerald-200',
-        amber: 'bg-amber-100 text-amber-600 border-amber-200',
-        orange: 'bg-orange-100 text-orange-600 border-orange-200',
-        purple: 'bg-purple-100 text-purple-600 border-purple-200',
-        pink: 'bg-pink-100 text-pink-600 border-pink-200'
-    };
-
-    return colorClasses[colors[type?.toLowerCase()]] || colorClasses.gray;
+    return COLOR_CLASSES[DOCUMENT_COLORS[type?.toLowerCase()]] || COLOR_CLASSES.gray;
 };
 
 export const DocumentNode = memo(({ id, data, selected }) => {
     const [showPreview, setShowPreview] = useState(false);
     const { copied, copy } = useCopyToClipboard();
 
+    // eslint-disable-next-line react/no-unstable-nested-components
     const DocIcon = getDocumentIcon(data.type);
     const colorClass = getDocumentColor(data.type);
 

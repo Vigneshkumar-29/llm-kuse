@@ -99,9 +99,9 @@ const CanvasInner = ({ isOpen = true, onClose, onMinimize, isMinimized = false }
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
             try {
-                const { nodes: savedNodes, edges: savedEdges } = JSON.parse(saved);
-                setNodes(savedNodes || []);
-                setEdges(savedEdges || []);
+                const { nodes, edges } = JSON.parse(saved);
+                setNodes(nodes || []);
+                setEdges(edges || []);
             } catch (err) {
                 console.error('Failed to load canvas:', err);
             }

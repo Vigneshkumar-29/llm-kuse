@@ -19,27 +19,35 @@ const SYSTEM_PROMPTS = {
 - Use code blocks with language identifiers for code (e.g., \`\`\`javascript).
 - Use bolding for key terms and headers for sections.
 - If explaining code, break it down step-by-step.
-- Be concise but helpful.`,
+- Be concise. Avoid unnecessary conversational filler.
+- Adapt your technical level to the user's question. If the user asks a simple question, give a simple answer.
+- If you don't know the answer, admit it. Do not make up information.`,
 
-    summarize: `You are a professional summarizer. Create clear, concise summaries that capture the main points.
+    summarize: `You are a professional summarizer. Create clear, concise summaries that capture the main points without unnecessary fluff.
 - Use bullet points for key takeaways
-- Keep summaries to 3-5 paragraphs
+- Keep summaries to 3-5 paragraphs maximum
+- Focus ONLY on the content provided
 - Highlight important facts and conclusions`,
 
     keypoints: `You are an analyst extracting key points from content.
 - Identify the 5-10 most important points
 - Number each point clearly
-- Keep each point brief but informative`,
+- Keep each point brief (1-2 sentences)
+- Focus on substance over style`,
 
     youtube: `You are a helpful assistant analyzing YouTube video content.
-- Base your answers on the provided transcript
-- Reference specific timestamps when relevant
-- Be accurate and cite the content directly`,
+- Base your answers STRICTLY on the provided transcript.
+- If the answer is not in the transcript, state that clearly.
+- Reference specific timestamps when relevant.
+- Be accurate and cite the content directly.
+- Do not use outside knowledge unless explicitly asked.`,
 
     document: `You are an intelligent document analyzer.
-- Analyze the provided document content carefully
-- Answer questions based on the document
-- Cite relevant sections when possible`
+- Analyze the provided document content carefully.
+- Answer questions based STRICTLY on the document.
+- Cite relevant sections when possible.
+- If the document does not contain the answer, state that clearly.
+- Be concise and direct.`
 };
 
 class AIService {
@@ -122,8 +130,9 @@ class AIService {
             });
         }
 
-        // Add conversation history
-        fullMessages.push(...messages);
+        // Add conversation history (limited to last 10 messages for speed)
+        const recentMessages = messages.slice(-10);
+        fullMessages.push(...recentMessages);
 
         if (!this.isConnected) {
             return {
@@ -176,7 +185,7 @@ class AIService {
 
 ${title ? `Title: ${title}\n` : ''}${url ? `Source: ${url}\n` : ''}
 ---
-${content.substring(0, 8000)}
+${content.substring(0, 6000)}
 ---
 
 Provide a comprehensive but concise summary.`;
@@ -197,7 +206,7 @@ Provide a comprehensive but concise summary.`;
 
 ${title ? `Title: ${title}\n` : ''}
 ---
-${content.substring(0, 8000)}
+${content.substring(0, 6000)}
 ---
 
 List each point clearly and concisely.`;
@@ -217,7 +226,7 @@ Video Title: ${videoInfo.title || 'Unknown'}
 Channel: ${videoInfo.author || 'Unknown'}
 
 Transcript:
-${transcript.substring(0, 10000)}
+${transcript.substring(0, 6000)}
 `;
 
         const prompt = `Based on the video transcript provided, please answer this question:
@@ -242,7 +251,7 @@ Document: ${documentInfo.name || 'Unknown'}
 Type: ${documentInfo.type || 'Unknown'}
 
 Content:
-${documentContent.substring(0, 10000)}
+${documentContent.substring(0, 6000)}
 `;
 
         const prompt = `Based on the document provided, please answer this question:
@@ -269,7 +278,7 @@ URL: ${metadata.url || 'Unknown'}
 Description: ${metadata.description || 'N/A'}
 
 Content:
-${content.substring(0, 8000)}
+${content.substring(0, 6000)}
 
 Please provide:
 1. A brief summary

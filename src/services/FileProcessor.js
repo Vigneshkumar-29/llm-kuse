@@ -86,7 +86,7 @@ export const extractTextFromSpreadsheet = async (file) => {
         let fullText = '';
         const sheetSummary = [];
 
-        workbook.SheetNames.forEach((sheetName, index) => {
+        workbook.SheetNames.forEach((sheetName) => {
             const worksheet = workbook.Sheets[sheetName];
 
             // Convert to JSON for easier processing

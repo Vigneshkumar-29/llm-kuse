@@ -61,8 +61,13 @@ const CommandPalette = ({
 
     useEffect(() => {
         if (isOpen) {
-            setPage('home');
-            setSearch('');
+            // Reset state in a timeout to avoid synchronous update warning during render phase
+            // if this effect is triggered by parent layout changes
+            const timer = setTimeout(() => {
+                setSearch('');
+                setPage('home');
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [isOpen]);
 

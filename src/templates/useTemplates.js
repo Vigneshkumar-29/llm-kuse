@@ -8,7 +8,7 @@
  * @version 1.0.0
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
     renderTemplate,
     generateAIPrompt,
@@ -175,18 +175,8 @@ export function useTemplates(options = {}) {
      * Update template data
      */
     const updateData = useCallback((updates) => {
-        setTemplateData(prev => {
-            const newData = { ...prev, ...updates };
-
-            // Auto-validate if enabled
-            if (autoValidate && activeTemplate) {
-                const result = validateTemplateData(newData, activeTemplate.fields);
-                setValidationErrors(result.errors);
-            }
-
-            return newData;
-        });
-    }, [activeTemplate, autoValidate]);
+        setTemplateData(prev => ({ ...prev, ...updates }));
+    }, []);
 
     /**
      * Update a specific field
@@ -254,33 +244,42 @@ export function useTemplates(options = {}) {
      */
     const render = useCallback(() => {
         if (!activeTemplate || !activeVariant) {
-            onError?.('No template selected');
-            return null;
+            return '';
         }
 
         const templateStructure = activeTemplate.structure?.[activeVariant];
         if (!templateStructure) {
-            onError?.(`No structure found for variant "${activeVariant}"`);
-            return null;
+            return '';
         }
 
         // Merge data with defaults
         const mergedData = mergeWithDefaults(templateData, activeTemplate, activeVariant);
 
-        // Validate before rendering
-        const validation = validateTemplateData(mergedData, activeTemplate.fields);
-        setValidationErrors(validation.errors);
-
-        if (!validation.valid) {
-            onError?.('Validation failed', validation.errors);
-        }
-
         // Render template
-        const rendered = renderTemplate(templateStructure, mergedData);
-        setRenderedContent(rendered);
-        onRender?.(rendered);
+        return renderTemplate(templateStructure, mergedData);
+    }, [activeTemplate, activeVariant, templateData]);
 
-        return rendered;
+    // Use effect to handle Side Effects of rendering (validation, state updates)
+    useEffect(() => {
+        if (activeTemplate && activeVariant) {
+            const templateStructure = activeTemplate.structure?.[activeVariant];
+            if (templateStructure) {
+                const mergedData = mergeWithDefaults(templateData, activeTemplate, activeVariant);
+                
+                // Validate
+                const validation = validateTemplateData(mergedData, activeTemplate.fields);
+                setValidationErrors(validation.errors);
+
+                if (!validation.valid) {
+                    onError?.('Validation failed', validation.errors);
+                }
+
+                // Update rendered content state
+                const rendered = renderTemplate(templateStructure, mergedData);
+                setRenderedContent(rendered);
+                onRender?.(rendered);
+            }
+        }
     }, [activeTemplate, activeVariant, templateData, onError, onRender]);
 
     /**
@@ -325,7 +324,7 @@ export function useTemplates(options = {}) {
 
 Context:
 ${Object.entries({ ...templateData, ...context })
-                    .filter(([key, value]) => value && typeof value === 'string')
+                    .filter(([, value]) => value && typeof value === 'string')
                     .map(([key, value]) => `${key}: ${value}`)
                     .join('\n')}
 

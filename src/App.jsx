@@ -162,7 +162,7 @@ function App() {
     if (activeMode === 'chat') {
       inputRef.current?.focus();
     }
-  }, [activeMode]);
+  }, [activeMode, messages.length]);
 
   const handleSend = async (customMessage = null) => {
     const messageText = customMessage || input;
@@ -216,7 +216,9 @@ function App() {
       - Use code blocks with language identifiers for code (e.g., \`\`\`javascript).
       - Use bolding for key terms and headers for sections.
       - If explaining code, break it down step-by-step.
-      - Be concise but helpful.`
+      - Be concise. Avoid unnecessary conversational filler.
+      - Adapt your technical level to the user's question. If the user asks a simple question, give a simple answer.
+      - If you don't know the answer, admit it. Do not make up information.`
     };
 
     const messageForAPI = {
@@ -226,7 +228,9 @@ function App() {
         : messageText
     };
 
-    const messagesForAPI = [systemPrompt, ...messages, messageForAPI];
+    // Limit history to last 10 messages for performance
+    const recentMessages = messages.slice(-10);
+    const messagesForAPI = [systemPrompt, ...recentMessages, messageForAPI];
 
     try {
       const response = await fetch('/ollama/api/chat', {
@@ -384,7 +388,7 @@ Try asking me about code, explanations, or debugging!`;
       `Please connect Ollama by running \`ollama run llama3.2\` in your terminal.`;
   };
 
-  const handleNewThread = () => {
+  const handleNewThread = useCallback(() => {
     setMessages([]);
     setShowWorkspace(false);
     setInput("");
@@ -395,7 +399,7 @@ Try asking me about code, explanations, or debugging!`;
     if (activeMode === 'chat') {
       inputRef.current?.focus();
     }
-  };
+  }, [activeMode, setMessages, setInput, setUploadedFiles, setSourceOnlyMode, setShowContextSettings, setReferencedSources]);
 
   const handleFilesChange = (files) => {
     setUploadedFiles(files);
@@ -414,7 +418,7 @@ Try asking me about code, explanations, or debugging!`;
           inputRef.current.focus();
         }
         break;
-      case 'command':
+      case 'command': {
         const cmd = action.command;
         if (cmd.id === 'action-clear') {
           handleNewThread();
@@ -425,10 +429,11 @@ Try asking me about code, explanations, or debugging!`;
           console.log('Toggle theme');
         }
         break;
+      }
       default:
         break;
     }
-  }, [showWorkspace]);
+  }, [showWorkspace, handleNewThread]);
 
   // Handle adding content from Library/Documents to Chat
   const handleAddToChat = useCallback((content) => {
@@ -622,7 +627,7 @@ Try asking me about code, explanations, or debugging!`;
                       >
                         {/* Avatar */}
                         <div className={`
-                              w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center shadow-sm border border-black/5
+                              w-10 h-10 rounded-full shrink-0 flex items-center justify-center shadow-sm border border-black/5
                               ${msg.role === 'assistant' ? 'bg-white' : 'bg-primary'}
                             `}>
                           {msg.role === 'assistant'
@@ -641,8 +646,8 @@ Try asking me about code, explanations, or debugging!`;
                               <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 components={{
-                                  a: ({ node, ...props }) => <a target="_blank" rel="noopener noreferrer" {...props} />,
-                                  code({ node, inline, className, children, ...props }) {
+                                  a: ({ ...props }) => <a target="_blank" rel="noopener noreferrer" {...props} />,
+                                  code({ inline, className, children, ...props }) {
                                     const match = /language-(\w+)/.exec(className || '')
                                     return !inline && match ? (
                                       <CodeBlock
@@ -680,7 +685,7 @@ Try asking me about code, explanations, or debugging!`;
 
                     {isLoading && (
                       <div className="flex gap-6 animate-enter">
-                        <div className="w-10 h-10 rounded-full bg-white flex-shrink-0 flex items-center justify-center shadow-sm border border-black/5">
+                        <div className="w-10 h-10 rounded-full bg-white shrink-0 flex items-center justify-center shadow-sm border border-black/5">
                           <Sparkles size={18} className="text-accent animate-spin" />
                         </div>
                         <div className="bg-white p-6 rounded-2xl shadow-card border border-black/5 flex items-center gap-2">

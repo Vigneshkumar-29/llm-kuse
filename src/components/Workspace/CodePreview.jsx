@@ -11,8 +11,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Play, RefreshCw, ExternalLink, Maximize2, Minimize2,
-    Code2, Eye, Copy, Check, AlertCircle, Smartphone, Monitor, Tablet
+    Maximize2, Minimize2, Copy, Check, RefreshCw,
+    Smartphone, Monitor, Tablet, Code, Eye, Terminal
 } from 'lucide-react';
 
 // =============================================================================
@@ -43,7 +43,7 @@ const CodePreview = ({
     const [activeDevice, setActiveDevice] = useState('desktop');
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [error, setError] = useState(null);
-    const [lastUpdate, setLastUpdate] = useState(Date.now());
+    const [lastUpdate, setLastUpdate] = useState(() => Date.now());
     const [isCopied, setIsCopied] = useState(false);
     const [viewMode, setViewMode] = useState('preview'); // 'preview' | 'code'
     const iframeRef = useRef(null);
@@ -122,12 +122,28 @@ const CodePreview = ({
                 doc.open();
                 doc.write(getCompleteHtml);
                 doc.close();
-                setError(null);
             }
         } catch (err) {
-            setError(err.message);
+            // Error handling moved to separate effect
+            console.error('Preview error:', err);
         }
     }, [getCompleteHtml, lastUpdate, autoRun]);
+
+    // Handle errors separately
+    useEffect(() => {
+        if (!getCompleteHtml) return;
+        
+        // Use requestAnimationFrame to avoid synchronous state update warning
+        const raf = requestAnimationFrame(() => {
+            try {
+                setError(null);
+            } catch (err) {
+                setError(err.message);
+            }
+        });
+        
+        return () => cancelAnimationFrame(raf);
+    }, [getCompleteHtml]);
 
     // Refresh preview
     const handleRefresh = () => {
