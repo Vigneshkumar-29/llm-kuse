@@ -101,7 +101,7 @@ const removeUnwantedElements = ($) => {
     selectorsToRemove.forEach(selector => {
         try {
             $(selector).remove();
-        } catch (e) {
+        } catch {
             // Invalid selector, skip
         }
     });

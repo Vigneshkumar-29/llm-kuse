@@ -9,7 +9,6 @@
  */
 
 import React, { memo, useState } from 'react';
-import { motion } from 'framer-motion';
 import {
     User, Bot, Copy, Check, ThumbsUp, ThumbsDown,
     RefreshCw, MoreHorizontal, Sparkles

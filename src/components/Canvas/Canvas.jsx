@@ -32,7 +32,29 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { nodeTypes, edgeTypes } from './CanvasNodes';
+import {
+    TextNode,
+    CodeNode,
+    AIResponseNode,
+    ImageNode,
+    DocumentNode,
+    StickyNode,
+    CustomEdge
+} from './CanvasNodes';
+
+// Node types configuration
+const nodeTypes = {
+    text: TextNode,
+    code: CodeNode,
+    aiResponse: AIResponseNode,
+    image: ImageNode,
+    document: DocumentNode,
+    sticky: StickyNode
+};
+
+const edgeTypes = {
+    custom: CustomEdge
+};
 import CanvasToolbar from './CanvasToolbar';
 import CanvasAIActions from './CanvasAIActions';
 import { X, Maximize2, Minimize2, Layers, Sparkles } from 'lucide-react';
@@ -156,7 +178,6 @@ const CanvasInner = ({ isOpen = true, onClose, onMinimize, isMinimized = false }
     const addNode = useCallback((type) => {
         if (isLocked) return;
 
-        const viewport = reactFlowInstance.getViewport();
         const position = reactFlowInstance.screenToFlowPosition({
             x: window.innerWidth / 2,
             y: window.innerHeight / 2
@@ -181,7 +202,7 @@ const CanvasInner = ({ isOpen = true, onClose, onMinimize, isMinimized = false }
 
         setNodes(nds => [...nds, newNode]);
         saveHistory();
-    }, [reactFlowInstance, isLocked, setNodes, saveHistory]);
+    }, [reactFlowInstance, isLocked, setNodes, saveHistory, deleteNode, updateNodeData]);
 
     const deleteNode = useCallback((nodeId) => {
         if (isLocked) return;

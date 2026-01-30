@@ -29,14 +29,14 @@ export default defineConfig(({ mode }) => {
           headers: {
             'ngrok-skip-browser-warning': 'true'
           },
-          configure: (proxy, _options) => {
-            proxy.on('error', (err, _req, _res) => {
+          configure: (proxy) => {
+            proxy.on('error', (err) => {
               console.log('Proxy error:', err);
             });
-            proxy.on('proxyReq', (proxyReq, req, _res) => {
+            proxy.on('proxyReq', (proxyReq, req) => {
               console.log('Proxying:', req.method, req.url, '-> Target');
             });
-            proxy.on('proxyRes', (proxyRes, req, _res) => {
+            proxy.on('proxyRes', (proxyRes, req) => {
               console.log('Response:', proxyRes.statusCode, req.url);
             });
           },

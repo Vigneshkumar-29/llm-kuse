@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
     Send, Paperclip, Mic, MicOff, Image, X,
     Sparkles, StopCircle, ArrowUp, Loader2

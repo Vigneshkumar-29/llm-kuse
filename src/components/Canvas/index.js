@@ -16,9 +16,8 @@
 export { default as Canvas } from './Canvas';
 export { default as CanvasToolbar } from './CanvasToolbar';
 export { default as CanvasAIActions } from './CanvasAIActions';
-export {
-    nodeTypes,
-    edgeTypes,
+
+import {
     TextNode,
     CodeNode,
     AIResponseNode,
@@ -27,3 +26,28 @@ export {
     StickyNode,
     CustomEdge
 } from './CanvasNodes';
+
+// Re-export individual components
+export {
+    TextNode,
+    CodeNode,
+    AIResponseNode,
+    ImageNode,
+    DocumentNode,
+    StickyNode,
+    CustomEdge
+};
+
+// Export node and edge type configurations
+export const nodeTypes = {
+    text: TextNode,
+    code: CodeNode,
+    aiResponse: AIResponseNode,
+    image: ImageNode,
+    document: DocumentNode,
+    sticky: StickyNode
+};
+
+export const edgeTypes = {
+    custom: CustomEdge
+};

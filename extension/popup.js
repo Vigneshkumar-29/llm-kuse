@@ -105,7 +105,7 @@ copyBtn.addEventListener('click', async () => {
             `;
         }, 2000);
 
-    } catch (error) {
+    } catch {
         errorEl.textContent = 'Failed to copy';
         errorEl.style.display = 'block';
     }

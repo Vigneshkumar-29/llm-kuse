@@ -119,7 +119,9 @@ function extractPageContent() {
     selectorsToRemove.forEach(selector => {
         try {
             clone.querySelectorAll(selector).forEach(el => el.remove());
-        } catch (e) { }
+        } catch {
+            // Silently fail if selector is invalid
+        }
     });
 
     // Extract metadata

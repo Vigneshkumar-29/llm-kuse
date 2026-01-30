@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
     MessageSquare, Plus, Search, Trash2, Edit2, Check, X,
     MoreHorizontal, Star, Archive, Clock, ChevronDown
@@ -36,7 +36,7 @@ const ChatHistory = ({
     const [showArchived, setShowArchived] = useState(false);
 
     // Filter and group conversations
-    const { activeConversations, archivedConversations, filteredConversations } = useMemo(() => {
+    const { archivedConversations, filteredConversations } = useMemo(() => {
         const active = conversations.filter(c => !c.archived);
         const archived = conversations.filter(c => c.archived);
 

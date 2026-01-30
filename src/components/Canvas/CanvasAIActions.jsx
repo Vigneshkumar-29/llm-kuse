@@ -78,7 +78,7 @@ const CanvasAIActions = ({
                     }
                     break;
 
-                case 'improve':
+                case 'improve': {
                     const content = nodeData.code || nodeData.content || '';
                     result = await improve(content, nodeData.code ? 'code' : 'text');
                     if (result.success) {
@@ -87,6 +87,7 @@ const CanvasAIActions = ({
                         });
                     }
                     break;
+                }
 
                 case 'brainstorm':
                     result = await brainstorm(nodeData.content || nodeData.title || 'this topic');

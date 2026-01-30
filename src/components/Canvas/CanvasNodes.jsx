@@ -189,7 +189,7 @@ NodeWrapper.displayName = 'NodeWrapper';
 // 1. TEXT NOTE - EDITABLE TEXT BLOCK
 // =============================================================================
 
-export const TextNode = memo(({ id, data, selected }) => {
+const TextNode = memo(({ id, data, selected }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [content, setContent] = useState(data.content || '');
     const [title, setTitle] = useState(data.title || 'New Note');
@@ -330,7 +330,7 @@ TextNode.displayName = 'TextNode';
 // 2. AI RESPONSE CARD - CHAT RESPONSE AS CARD
 // =============================================================================
 
-export const AIResponseNode = memo(({ id, data, selected }) => {
+const AIResponseNode = memo(({ id, data, selected }) => {
     const [isExpanded, setIsExpanded] = useState(true);
     const [showSources, setShowSources] = useState(false);
     const { copied, copy } = useCopyToClipboard();
@@ -449,7 +449,7 @@ AIResponseNode.displayName = 'AIResponseNode';
 // 3. IMAGE ELEMENT - UPLOADED OR URL IMAGES
 // =============================================================================
 
-export const ImageNode = memo(({ id, data, selected }) => {
+const ImageNode = memo(({ id, data, selected }) => {
     const [isEditing, setIsEditing] = useState(!data.src);
     const [error, setError] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -685,7 +685,7 @@ const LANGUAGE_OPTIONS = [
     { value: 'markdown', label: 'Markdown', icon: '📝' }
 ];
 
-export const CodeNode = memo(({ id, data, selected }) => {
+const CodeNode = memo(({ id, data, selected }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [code, setCode] = useState(data.code || '// Your code here');
     const [language, setLanguage] = useState(data.language || 'javascript');
@@ -899,11 +899,10 @@ const getDocumentColor = (type) => {
     return COLOR_CLASSES[DOCUMENT_COLORS[type?.toLowerCase()]] || COLOR_CLASSES.gray;
 };
 
-export const DocumentNode = memo(({ id, data, selected }) => {
+const DocumentNode = memo(({ id, data, selected }) => {
     const [showPreview, setShowPreview] = useState(false);
     const { copied, copy } = useCopyToClipboard();
 
-    // eslint-disable-next-line react/no-unstable-nested-components
     const DocIcon = getDocumentIcon(data.type);
     const colorClass = getDocumentColor(data.type);
 
@@ -1046,7 +1045,7 @@ const STICKY_COLORS = {
     orange: { bg: 'bg-orange-100', border: 'border-orange-300', text: 'text-orange-900' }
 };
 
-export const StickyNode = memo(({ id, data, selected }) => {
+const StickyNode = memo(({ id, data, selected }) => {
     const [content, setContent] = useState(data.content || '');
     const [showColorPicker, setShowColorPicker] = useState(false);
     const color = data.color || 'yellow';
@@ -1129,7 +1128,7 @@ StickyNode.displayName = 'StickyNode';
 // 7. CUSTOM EDGE - CONNECTION LINES
 // =============================================================================
 
-export const CustomEdge = ({
+const CustomEdge = ({
     id,
     sourceX,
     sourceY,
@@ -1181,20 +1180,15 @@ export const CustomEdge = ({
 };
 
 // =============================================================================
-// NODE TYPES EXPORT
+// EXPORTS
 // =============================================================================
 
-export const nodeTypes = {
-    text: TextNode,
-    code: CodeNode,
-    aiResponse: AIResponseNode,
-    image: ImageNode,
-    document: DocumentNode,
-    sticky: StickyNode
+export {
+    TextNode,
+    CodeNode,
+    AIResponseNode,
+    ImageNode,
+    DocumentNode,
+    StickyNode,
+    CustomEdge
 };
-
-export const edgeTypes = {
-    custom: CustomEdge
-};
-
-export default nodeTypes;
