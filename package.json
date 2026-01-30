@@ -1,7 +1,9 @@
 {
-  "name": "llm",
+  "name": "ai-document-assistant",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "AI-Powered Document Assistant - Final Year Project",
+  "author": "Your Name",
   "type": "module",
   "scripts": {
     "dev": "vite",

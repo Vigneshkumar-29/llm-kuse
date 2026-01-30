@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Menu, User, Sparkles, Zap, ArrowRight,
-  LayoutGrid, FileText, Search, Paperclip, Download
+  Menu, User, Sparkles, MessageSquare, BookOpen,
+  FileText, Search, Paperclip, Download, LayoutGrid, ArrowRight
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -11,11 +11,8 @@ import WorkspacePanel from './components/WorkspacePanel';
 import FileUploadModal from './components/FileUploadModal';
 import ContextSettings, { SourceReferenceDisplay } from './components/ContextSettings';
 import { buildFileContext, extractSourceReferences } from './services/FileProcessor';
-import { Canvas } from './components/Canvas';
 import { DocumentEditor } from './components/Documents';
 import Library from './components/Library/Library';
-import { YouTubeEmbed } from './components/YouTube';
-import { URLExtractor } from './components/URLExtractor';
 import CommandPalette from './components/CommandPalette';
 import aiService from './services/AIService';
 import ExportService from './services/ExportService';
@@ -52,31 +49,28 @@ const useLocalStorage = (key, initialValue) => {
   return [storedValue, setValue];
 };
 
-// Bento Grid Items
-const BENTO_ITEMS = [
+// Professional Feature Cards
+const FEATURE_CARDS = [
   {
-    id: 'explain',
-    icon: <Sparkles className="text-orange-600" size={24} />,
-    title: "Explain Concept",
-    desc: "Break down complex topics.",
-    col: "col-span-1",
-    bg: "bg-orange-50"
+    id: 'chat',
+    icon: <MessageSquare className="text-blue-600" size={28} />,
+    title: "Intelligent Chat",
+    desc: "Have natural conversations with AI powered by local LLMs",
+    gradient: "from-blue-50 to-blue-100"
   },
   {
-    id: 'debug',
-    icon: <Zap className="text-amber-600" size={24} />,
-    title: "Debug Code",
-    desc: "Find and fix errors instantly.",
-    col: "col-span-1",
-    bg: "bg-amber-50"
+    id: 'documents',
+    icon: <FileText className="text-green-600" size={28} />,
+    title: "Document Processing",
+    desc: "Upload and analyze PDFs, Word docs, images, and more",
+    gradient: "from-green-50 to-green-100"
   },
   {
-    id: 'docs',
-    icon: <FileText className="text-emerald-600" size={24} />,
-    title: "Write Documentation",
-    desc: "Generate comprehensive docs.",
-    col: "col-span-2",
-    bg: "bg-emerald-50"
+    id: 'library',
+    icon: <BookOpen className="text-purple-600" size={28} />,
+    title: "Smart Library",
+    desc: "Organize, search, and manage all your documents",
+    gradient: "from-purple-50 to-purple-100"
   },
 ];
 
@@ -579,11 +573,11 @@ Try asking me about code, explanations, or debugging!`;
                   <div className="h-full flex flex-col items-center justify-center max-w-4xl mx-auto pb-20 animate-enter">
 
                     <div className="text-center mb-12">
-                      <h1 className="font-serif text-4xl md:text-5xl text-primary mb-4 tracking-tight">
-                        What will you <span className="text-accent italic">create</span> today?
+                      <h1 className="font-bold text-4xl md:text-5xl text-gray-900 mb-4 tracking-tight">
+                        AI Document Assistant
                       </h1>
-                      <p className="text-secondary text-lg font-light max-w-xl mx-auto mb-3">
-                        Your persistent AI workspace.
+                      <p className="text-gray-600 text-lg font-light max-w-xl mx-auto mb-3">
+                        Process documents, chat with AI, and manage your knowledge library - all with 100% local privacy.
                       </p>
                       {isDemoMode ? (
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-full text-amber-700 text-sm">
@@ -599,17 +593,17 @@ Try asking me about code, explanations, or debugging!`;
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl px-6">
-                      {BENTO_ITEMS.map((item) => (
+                      {FEATURE_CARDS.map((item) => (
                         <button
                           key={item.id}
-                          onClick={() => handleSend(`${item.title}`)}
-                          className={`${item.col} ${item.bg} p-6 rounded-2xl border border-black/5 text-left transition-all hover:scale-[1.02] hover:shadow-lg group`}
+                          onClick={() => setActiveMode(item.id)}
+                          className={`bg-gradient-to-br ${item.gradient} p-6 rounded-2xl border border-black/5 text-left transition-all hover:scale-[1.02] hover:shadow-lg group`}
                         >
                           <div className="mb-4 bg-white/60 w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-sm group-hover:scale-110 transition-transform">
                             {item.icon}
                           </div>
-                          <h3 className="font-serif text-xl font-medium text-primary mb-1">{item.title}</h3>
-                          <p className="text-sm text-secondary/80">{item.desc}</p>
+                          <h3 className="font-serif text-xl font-medium text-gray-900 mb-1">{item.title}</h3>
+                          <p className="text-sm text-gray-600">{item.desc}</p>
                         </button>
                       ))}
                     </div>
@@ -779,27 +773,9 @@ Try asking me about code, explanations, or debugging!`;
           </>
         )}
 
-        {activeMode === 'canvas' && (
-          <div className="w-full h-full">
-            <Canvas />
-          </div>
-        )}
-
         {activeMode === 'documents' && (
           <div className="w-full h-full">
             <DocumentEditor />
-          </div>
-        )}
-
-        {activeMode === 'youtube' && (
-          <div className="w-full h-full">
-            <YouTubeEmbed />
-          </div>
-        )}
-
-        {activeMode === 'url' && (
-          <div className="w-full h-full">
-            <URLExtractor />
           </div>
         )}
 
